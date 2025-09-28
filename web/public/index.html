@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Good Boy Simulator</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topline">
+      <strong id="deviceName">GoodBoy</strong>
+      <button id="refreshStatus" class="icon" title="Refresh status">↻</button>
+    </div>
+    <div id="statusBar" class="statusCompact">
+      <span id="wifi">Wi‑Fi: –</span>
+      <span id="battery">Battery: –</span>
+      <span id="fw">FW: –</span>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- DISPENSE TAB -->
+    <section id="tab-dispense" class="tab active">
+      <button id="btnDispenseBig" class="primaryBig">Dispense</button>
+      <div class="inlineControls">
+        <label for="count">Count</label>
+        <input id="count" type="number" min="1" max="10" value="1" />
+      </div>
+      <pre id="dispenseResult" class="mono"></pre>
+    </section>
+
+    <!-- CALIBRATION TAB -->
+    <section id="tab-cal" class="tab">
+      <div class="row">
+        <label>Mode</label>
+        <select id="mode">
+          <option value="servo">Servo</option>
+          <option value="stepper">Stepper</option>
+        </select>
+      </div>
+      <div class="row" id="servoRow">
+        <label>Open</label>
+        <input id="openAngle" type="number" min="0" max="180" value="70" />
+        <label>Close</label>
+        <input id="closeAngle" type="number" min="0" max="180" value="10" />
+      </div>
+      <div class="row" id="stepperRow" style="display:none">
+        <label>Steps/Dispense</label>
+        <input id="stepsPerDispense" type="number" min="1" max="2000" value="180" />
+      </div>
+      <button id="btnSaveCal" class="primary">Save Calibration</button>
+      <pre id="calResult" class="mono"></pre>
+    </section>
+
+    <!-- LOGS TAB -->
+    <section id="tab-logs" class="tab">
+      <div class="row">
+        <button id="btnLoadLogs" class="secondary">Load Logs</button>
+        <button id="btnClearLogs" class="secondary">Clear</button>
+      </div>
+      <ul id="logs" class="logs"></ul>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="dispense" class="tabbtn active">Dispense</button>
+    <button data-tab="cal" class="tabbtn">Calibrate</button>
+    <button data-tab="logs" class="tabbtn">Logs</button>
+  </nav>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

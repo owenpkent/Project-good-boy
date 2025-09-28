@@ -115,6 +115,49 @@ All endpoints are local-only by default, with optional password or device PIN se
 
 ## Getting Started
 
+### Local testing (no hardware)
+
+You can run unit tests on your Windows machine without any ESP32 connected using PlatformIO's native environment.
+
+1. Install PlatformIO (VS Code extension or CLI).
+2. From the project root, run:
+
+```bash
+pio test -e native
+```
+
+This builds and runs tests under `test/` against portable code in `lib/` (e.g., `lib/core/backoff.h`). The embedded `src/` firmware is excluded for the native target.
+
+If you see a compiler/toolchain error on Windows, install the Visual Studio Build Tools (C++) or let PlatformIO auto-install the MinGW toolchain when prompted.
+
+### Local Web Simulator (mobile UI)
+
+Run a phone-optimized web app locally with mock REST endpoints that mimic the ESP32.
+
+1. Install Node.js LTS (includes npm): https://nodejs.org/en
+2. In `web/` run:
+
+```bash
+npm install
+npm start
+```
+
+3. Open the UI:
+   - On this machine: http://localhost:3000
+   - On your phone (same Wi‑Fi): http://<your-computer-ip>:3000
+     - Find IP via `ipconfig` (Windows). Allow Node.js through the firewall if prompted.
+
+What’s included:
+- Big, single "Dispense" button on the main tab, plus count control
+- Tabs for Calibration and Logs
+- Compact status bar (device name, Wi‑Fi, battery, firmware)
+
+Endpoints implemented by the simulator:
+- `POST /api/dispense` `{ count }` → enqueues a simulated dispense with jam probability
+- `GET /api/status` → device status with changing RSSI/battery
+- `POST /api/calibrate` → updates in-memory calibration
+- `GET /api/logs` → recent events
+
 ### Hardware Assembly
 
 1. Print or build the enclosure and mounting hardware.
@@ -143,23 +186,15 @@ All endpoints are local-only by default, with optional password or device PIN se
 2. Press **Dispense**.
 3. Celebrate a very good dog.
 
----
-
 ## Build Tree
 
 ```
 project-good-boy/
-├─ firmware/            # ESP32 code (PlatformIO or ESP-IDF)
-│  ├─ src/
-│  ├─ data/             # Web UI assets for SPIFFS/LittleFS
-│  └─ env.sample.ini
-├─ app/                 # Optional mobile app or PWA source
-├─ hardware/
-│  ├─ schematics/       # KiCad source + PDFs
-│  ├─ pcb/
-│  └─ cad/              # STEP/STL for enclosure and mounts
-├─ docs/                # Images, diagrams, troubleshooting
-└─ LICENSE
+├─ src/                 # ESP32 firmware (Arduino/PlatformIO)
+├─ include/             # Headers/config
+├─ lib/                 # Portable libraries (e.g., core/)
+├─ test/                # Native unit tests (PlatformIO env:native)
+├─ web/                 # Local simulator (Express + mobile web UI)
 ```
 
 ---
