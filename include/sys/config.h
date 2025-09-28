@@ -1,11 +1,11 @@
 #pragma once
-#include <Arduino.h>
+#include "sys/compat.h"
 
 class AppConfig {
 public:
-  String device_name;
-  String wifi_ssid;
-  String wifi_pass;
+  Str device_name;
+  Str wifi_ssid;
+  Str wifi_pass;
 
   bool begin();
   bool load();

@@ -1,11 +1,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <time.h>
+#include "config.h"
 #if OTA_ENABLE
 #include <ArduinoOTA.h>
 #endif
 
-#include "config.h"
 #include "sys/logging.h"
 #include "sys/config.h"
 
@@ -47,6 +47,11 @@ static bool connectWiFi(const String& ssid, const String& pass) {
   return false;
 }
 
+// Overload to allow passing C strings (e.g., from std::string::c_str())
+static bool connectWiFi(const char* ssid, const char* pass) {
+  return connectWiFi(String(ssid ? ssid : ""), String(pass ? pass : ""));
+}
+
 static bool syncTime() {
   configTime(0, 0, NTP_SERVER);
   LOGI(TAG, "NTP sync using %s", NTP_SERVER);
@@ -75,7 +80,7 @@ void setup() {
   LOGI(TAG, "Device: %s", g_cfg.device_name.c_str());
 
   // Wi-Fi
-  bool wifiOk = connectWiFi(g_cfg.wifi_ssid, g_cfg.wifi_pass);
+  bool wifiOk = connectWiFi(g_cfg.wifi_ssid.c_str(), g_cfg.wifi_pass.c_str());
   if (!wifiOk && String(WIFI_SSID).length() > 0) {
     // Try compile-time credentials as fallback if NVS empty
     wifiOk = connectWiFi(String(WIFI_SSID), String(WIFI_PASS));
