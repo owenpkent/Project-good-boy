@@ -1,2 +1,52 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+## Line ending normalization
+# Store LF in the repo; check out with LF everywhere unless overridden below.
+* text=auto eol=lf
+
+# Windows scripts that work better with CRLF on checkout
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+## Common text formats (explicit LF checkout)
+*.c         text eol=lf
+*.cpp       text eol=lf
+*.h         text eol=lf
+*.hpp       text eol=lf
+*.ino       text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.js        text eol=lf
+*.ts        text eol=lf
+*.jsx       text eol=lf
+*.tsx       text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.ini       text eol=lf
+*.gitattributes text eol=lf
+
+# Lockfiles (keep stable diffs)
+yarn.lock           text eol=lf
+package-lock.json   text eol=lf
+pnpm-lock.yaml      text eol=lf
+
+## Binary formats (never modify line endings)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.bmp  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+*.7z   binary
+*.bin  binary
+*.stl  binary
+*.step binary
+*.stp  binary
+
+# SVG is text and benefits from diffs
+*.svg  text eol=lf
