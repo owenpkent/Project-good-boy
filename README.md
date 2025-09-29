@@ -2,7 +2,7 @@
 
 **Mission:** Quick, reliable, serverless treat dispensing that respects accessibility and privacy.
 
-Project Good Boy is a battery-powered, wheelchair-mountable dog treat dispenser built around an ESP32. Trigger treats from a simple phone app over your local network, with optional Bluetooth fallback and a direct-access Wi-Fi AP mode for setup and offline use. The system charges over USB-C and prioritizes accessibility-first interaction.
+  Project Good Boy is a battery-powered, wheelchair-mountable dog treat dispenser built around an ESP32. Trigger treats from a simple phone app over your local network, with optional Bluetooth fallback and a direct-access Wi-Fi AP mode for setup and offline use.
 
 ---
 
@@ -141,34 +141,31 @@ Run a phone-optimized web app locally with mock REST endpoints that mimic the ES
 npm install
 npm start
 ```
-
 3. Open the UI:
    - On this machine: http://localhost:3000
    - On your phone (same Wi‑Fi): http://<your-computer-ip>:3000
      - Find IP via `ipconfig` (Windows). Allow Node.js through the firewall if prompted.
 
-What’s included:
-- Big, single "Dispense" button on the main tab, plus count control
-- Tabs for Calibration and Logs
-- Compact status bar (device name, Wi‑Fi, battery, firmware)
+  What’s included:
+  - Big, single "Dispense" button on the main tab, plus count control
+  - Tabs for Calibration and Logs
+  - Compact status bar (device name, Wi‑Fi, battery, firmware)
+ 
+  - `POST /api/dispense` `{ count }` → enqueues a simulated dispense with jam probability
+  - `GET /api/status` → device status with changing RSSI/battery
+  - `POST /api/calibrate` → updates in-memory calibration
+  - `GET /api/logs` → recent events
 
-Endpoints implemented by the simulator:
-- `POST /api/dispense` `{ count }` → enqueues a simulated dispense with jam probability
-- `GET /api/status` → device status with changing RSSI/battery
-- `POST /api/calibrate` → updates in-memory calibration
-- `GET /api/logs` → recent events
+  ### Hardware Assembly
 
-### Hardware Assembly
-
-1. Print or build the enclosure and mounting hardware.
-2. Install the ESP32, power components, actuator, and sensors.
-3. Wire according to the reference schematic in `hardware/`.
+  1. Print or build the enclosure and mounting hardware.
+  2. Install the ESP32, power components, actuator, and sensors.
+  3. Wire according to the reference schematic in `hardware/`.
 
 ### Flash Firmware
 
 1. Install PlatformIO.
 2. Copy `firmware/env.sample.ini` to `firmware/env.ini` and set the board and port.
-3. Run `pio run -t upload -e esp32s3`.
 
 ### First Boot
 
@@ -186,37 +183,95 @@ Endpoints implemented by the simulator:
 2. Press **Dispense**.
 3. Celebrate a very good dog.
 
-## Build Tree
+### Stepper Integration (28BYJ‑48 + ULN2003)
 
+The firmware includes a minimal REST API and a built-in driver to spin a 28BYJ‑48 stepper via a ULN2003 board when you trigger a dispense.
+
+- **Firmware endpoints:**
+  - `POST /api/dispense` with JSON `{ "count": 1 }` enqueues `count` dispensing cycles.
+  - `GET /api/status` returns basic device info and Wi‑Fi status.
+- **Driver:** `src/stepper_28byj.h` (half-step sequence).
+- **Server:** `src/main.cpp` uses `WebServer` and a background `DispenseTask()` to avoid blocking Wi‑Fi.
+
+#### Wiring (ESP32 ↔ ULN2003 ↔ 28BYJ‑48)
+- ULN2003 `VCC` → 5 V supply
+- ULN2003 `GND` → ESP32 `GND` and 5 V supply GND (common ground)
+- ULN2003 `IN1..IN4` → ESP32 GPIOs (defaults): `14, 27, 26, 25`
+- The stepper’s 5‑wire harness plugs into the ULN2003 board. ULN2003 inputs accept ESP32 3.3 V logic.
+
+#### Firmware knobs (override as needed)
+Defaults live in `src/main.cpp` and can be overridden via `platformio.ini` build flags:
+
+- `STEPPER_IN1_PIN` (default `14`)
+- `STEPPER_IN2_PIN` (default `27`)
+- `STEPPER_IN3_PIN` (default `26`)
+- `STEPPER_IN4_PIN` (default `25`)
+- `STEPS_PER_DISPENSE` (default `180` half‑steps)
+- `STEPPER_STEP_DELAY_US` (default `1200` µs per half‑step)
+
+Example `platformio.ini` overrides under `[env:esp32dev]`:
+
+```ini
+build_flags =
+  -D STEPPER_IN1_PIN=14
+  -D STEPPER_IN2_PIN=27
+  -D STEPPER_IN3_PIN=26
+  -D STEPPER_IN4_PIN=25
+  -D STEPS_PER_DISPENSE=180
+  -D STEPPER_STEP_DELAY_US=1200
 ```
-project-good-boy/
-├─ src/                 # ESP32 firmware (Arduino/PlatformIO)
-├─ include/             # Headers/config
-├─ lib/                 # Portable libraries (e.g., core/)
-├─ test/                # Native unit tests (PlatformIO env:native)
-├─ web/                 # Local simulator (Express + mobile web UI)
-```
 
----
+#### Trigger a dispense
+- Find the device IP from serial logs after Wi‑Fi connects.
+- Send:
+  ```bash
+  curl -X POST http://<device-ip>/api/dispense \
+    -H "Content-Type: application/json" \
+    -d '{"count":1}'
+  ```
+- Check status:
+  ```bash
+  curl http://<device-ip>/api/status
+  ```
 
-## Roadmap
+#### Key points you may tune later
+- Treat amount: adjust `STEPS_PER_DISPENSE` so one cycle → one treat.
+- Torque/speed: adjust `STEPPER_STEP_DELAY_US` (larger = slower, more torque).
+- Pins: reassign `STEPPER_INx_PIN` to match your wiring.
+- Power: use a solid 5 V source for the motor; keep grounds common.
+- UI plumbing: the `web/` simulator targets a mock server; to use the big button with the device, point requests to the ESP32 or serve a small UI from the device.
 
-- **v0.1 Prototype:** Servo gate, AP provisioning, single dispense.
-- **v0.2:** Wi-Fi station mode, REST API, Web UI, calibration storage.
-- **v0.3:** BLE fallback, battery monitor, status LED and buzzer.
-- **v0.4:** Jam detection, treat count analytics, watchdog, OTA update.
-- **v1.0:** Enclosure refinements, full documentation, assembly guide.
+#### TODO
+- Wire 28BYJ‑48 + ULN2003 to ESP32 (5 V, common GND, `IN1..IN4` → `14,27,26,25`).
+- Build and flash `esp32dev`; verify Wi‑Fi connects.
+- Test `POST /api/dispense {"count":1}` and observe motor motion.
+- Calibrate `STEPS_PER_DISPENSE` and `STEPPER_STEP_DELAY_US` to dial in treat size.
+- Optional: point the mobile web UI to the device IP or serve the UI from ESP32.
+ 
+ ## Build Tree
+ 
+ ```
+ project-good-boy/
+ ├─ src/                 # ESP32 firmware (Arduino/PlatformIO)
+ ├─ include/             # Headers/config
+ ├─ lib/                 # Portable libraries (e.g., core/)
+ ├─ test/                # Native unit tests (PlatformIO env:native)
+ ├─ web/                 # Local simulator (Express + mobile web UI)
+ ```
+ 
+ ---
+ 
+ ## Roadmap
+ 
+ - **v0.1 Prototype:** Servo gate, AP provisioning, single dispense.
+ - **v0.2:** Wi-Fi station mode, REST API, Web UI, calibration storage.
+ - **v0.3:** BLE fallback, battery monitor, status LED and buzzer.
+ - **v0.4:** Jam detection, treat count analytics, watchdog, OTA update.
+ - **v1.0:** Enclosure refinements, full documentation, assembly guide.
+ 
+ ---
 
----
-
-## Security and Privacy
-
-- Local-only by default with no cloud dependency.
-- Optional device PIN for REST endpoints.
-- mDNS name discovery on LAN (can be disabled in firmware).
-- OTA updates should be signed or disabled by default.
-
----
+ 
 
 ## Contributing
 

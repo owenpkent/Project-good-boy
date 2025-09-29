@@ -6,6 +6,9 @@
 #include <ArduinoOTA.h>
 #endif
 
+#include <WebServer.h>
+#include "stepper_28byj.h"
+
 #include "sys/logging.h"
 #include "sys/config.h"
 
@@ -13,13 +16,40 @@
 #define LED_PIN 2 // Common default on ESP32 dev boards
 #endif
 
+#ifndef STEPPER_IN1_PIN
+#define STEPPER_IN1_PIN 14
+#endif
+#ifndef STEPPER_IN2_PIN
+#define STEPPER_IN2_PIN 27
+#endif
+#ifndef STEPPER_IN3_PIN
+#define STEPPER_IN3_PIN 26
+#endif
+#ifndef STEPPER_IN4_PIN
+#define STEPPER_IN4_PIN 25
+#endif
+
+#ifndef STEPS_PER_DISPENSE
+#define STEPS_PER_DISPENSE 180
+#endif
+#ifndef STEPPER_STEP_DELAY_US
+#define STEPPER_STEP_DELAY_US 1200
+#endif
+
 static AppConfig g_cfg;
 static const char* TAG = "MAIN";
+
+// Web server and actuator
+static WebServer server(80);
+static Stepper28BYJ g_stepper(STEPPER_IN1_PIN, STEPPER_IN2_PIN, STEPPER_IN3_PIN, STEPPER_IN4_PIN, STEPPER_STEP_DELAY_US);
+static QueueHandle_t g_dispenseQ = nullptr; // queue of int counts
 
 // Blink task
 void BlinkTask(void*);
 // Housekeeping/telemetry task
 void HouseTask(void*);
+// Dispense worker task
+void DispenseTask(void*);
 
 static bool connectWiFi(const String& ssid, const String& pass) {
   if (ssid.isEmpty()) {
@@ -106,6 +136,50 @@ void setup() {
     syncTime();
   }
 
+  // Initialize stepper and worker
+  g_stepper.begin();
+  g_dispenseQ = xQueueCreate(4, sizeof(int));
+  xTaskCreatePinnedToCore(DispenseTask, "dispense", 4096, nullptr, 1, nullptr, 0);
+
+  // Minimal REST API
+  server.on("/api/status", HTTP_GET, []() {
+    String body = "{";
+    body += "\"deviceName\":\"" + g_cfg.device_name + "\",";
+    body += "\"wifi\":{\"connected\":"; body += WiFi.isConnected() ? "true" : "false"; body += ",\"ssid\":\""; body += WiFi.SSID(); body += "\",\"rssi\":"; body += String(WiFi.RSSI()); body += "},";
+    body += "\"battery\":{\"percent\":100,\"voltage\":4.10},"; // placeholder
+    body += "\"firmware\":\"" FW_VERSION "\"";
+    body += "}";
+    server.send(200, "application/json", body);
+  });
+
+  server.on("/api/dispense", HTTP_POST, []() {
+    int count = 1;
+    String body = server.arg("plain");
+    int idx = body.indexOf("\"count\"");
+    if (idx >= 0) {
+      int colon = body.indexOf(":", idx);
+      if (colon >= 0) {
+        String num = body.substring(colon + 1);
+        // strip non-digit characters except minus
+        String digits;
+        for (size_t i = 0; i < num.length(); ++i) {
+          char c = num[i];
+          if ((c >= '0' && c <= '9') || c == '-') digits += c;
+          else if (digits.length() > 0) break;
+        }
+        long tmp = digits.toInt();
+        if (tmp > 0 && tmp <= 10) count = (int)tmp;
+      }
+    }
+    // enqueue
+    if (g_dispenseQ) xQueueSend(g_dispenseQ, &count, 0);
+    String resp = String("{\"ok\":true,\"enqueued\":true,\"count\":") + count + "}";
+    server.send(200, "application/json", resp);
+  });
+
+  server.begin();
+  LOGI(TAG, "HTTP server started on port 80");
+
   // Start tasks
   xTaskCreatePinnedToCore(BlinkTask, "blink", 2048, nullptr, 1, nullptr, 1);
   xTaskCreatePinnedToCore(HouseTask, "house", 4096, nullptr, 1, nullptr, 0);
@@ -117,6 +191,7 @@ void loop() {
     ArduinoOTA.handle();
   }
 #endif
+  server.handleClient();
   // Simple reconnect tick
   static unsigned long lastAttempt = 0;
   if (!WiFi.isConnected() && millis() - lastAttempt > 10000 && (g_cfg.wifi_ssid.length() || String(WIFI_SSID).length())) {
@@ -134,6 +209,21 @@ void BlinkTask(void*) {
   for (;;) {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
     vTaskDelay(WiFi.isConnected() ? fast : slow);
+  }
+}
+
+void DispenseTask(void*) {
+  const char* tag = "DSP";
+  for (;;) {
+    int count = 0;
+    if (g_dispenseQ && xQueueReceive(g_dispenseQ, &count, portMAX_DELAY) == pdTRUE) {
+      LOGI(tag, "Dispense request: %d", count);
+      for (int i = 0; i < count; ++i) {
+        g_stepper.step(STEPS_PER_DISPENSE);
+        vTaskDelay(pdMS_TO_TICKS(50));
+      }
+      LOGI(tag, "Dispense complete");
+    }
   }
 }
 
