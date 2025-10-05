@@ -1,5 +1,20 @@
 #pragma once
+#ifdef ARDUINO
 #include <Arduino.h>
+#else
+#include <cstdint>
+#include <cstdlib>
+// Minimal host stubs so editors/native analyzers don't error when ARDUINO is undefined
+inline void pinMode(int, int) {}
+inline void digitalWrite(int, int) {}
+inline void delayMicroseconds(unsigned int) {}
+#ifndef OUTPUT
+#define OUTPUT 1
+#endif
+#ifndef LOW
+#define LOW 0
+#endif
+#endif
 
 // Simple 28BYJ-48 stepper driver for ULN2003 board (half-step sequence)
 class Stepper28BYJ {
@@ -22,7 +37,12 @@ public:
   void step(long steps) {
     if (steps == 0) return;
     const int dir = (steps > 0) ? 1 : -1;
-    steps = labs(steps);
+    steps =
+#ifdef ARDUINO
+      labs(steps);
+#else
+      std::labs(steps);
+#endif
     while (steps--) {
       phase = (phase + dir) & 7; // wrap 0..7
       applyPhase(phase);

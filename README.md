@@ -48,13 +48,12 @@ flowchart LR
 - **Mounting:** RAM-ball or clamp mount with quick-release bracket.
 - **Safety:** Reverse polarity protection, fuse, thermal considerations, protected cell or BMS.
 
----
 
 ## Software Overview
 
 ### Firmware (ESP32)
 
-- Platform: PlatformIO or ESP-IDF.
+- Platform: Arduino CLI (ESP32 core). Separate local C++ tests use g++.
 - Modules: Wi-Fi manager, AP provisioning, REST API, Web UI, BLE GATT (optional), actuator control, debouncing, battery monitor, logging.
 
 ### Mobile App
@@ -117,18 +116,28 @@ All endpoints are local-only by default, with optional password or device PIN se
 
 ### Local testing (no hardware)
 
-You can run unit tests on your Windows machine without any ESP32 connected using PlatformIO's native environment.
+Two quick options:
 
-1. Install PlatformIO (VS Code extension or CLI).
-2. From the project root, run:
+1. Native C++ sanity (no Arduino):
+   - Build and run a small C++ program under `tests/`:
+   ```powershell
+   g++ tests/src/main.cpp -O2 -std=c++20 -o tests/build/main.exe
+   tests/build/main.exe
+   ```
 
-```bash
-pio test -e native
-```
+2. Arduino CLI compile-only check (no hardware):
+   - Install Arduino CLI and cores:
+   ```powershell
+   arduino-cli core update-index
+   arduino-cli core install esp32:esp32
+   arduino-cli core install arduino:avr
+   ```
+   - Compile the sample sketch:
+   ```powershell
+   arduino-cli compile -b esp32:esp32:esp32 .\tests\arduino_cli_stepper
+   ```
 
-This builds and runs tests under `test/` against portable code in `lib/` (e.g., `lib/core/backoff.h`). The embedded `src/` firmware is excluded for the native target.
-
-If you see a compiler/toolchain error on Windows, install the Visual Studio Build Tools (C++) or let PlatformIO auto-install the MinGW toolchain when prompted.
+Note (Windows): for the native g++ example, install a GCC toolchain such as MSYS2 or MinGW-w64 if `g++` is not already in PATH.
 
 ### Local Web Simulator (mobile UI)
 
@@ -162,10 +171,23 @@ npm start
   2. Install the ESP32, power components, actuator, and sensors.
   3. Wire according to the reference schematic in `hardware/`.
 
-### Flash Firmware
+### Flash Firmware (Arduino CLI)
 
-1. Install PlatformIO.
-2. Copy `firmware/env.sample.ini` to `firmware/env.ini` and set the board and port.
+1. Install Arduino CLI: https://arduino.github.io/arduino-cli/latest/installation/
+2. Install the ESP32 core:
+   ```powershell
+   arduino-cli core update-index
+   arduino-cli core install esp32:esp32
+   ```
+3. Connect the ESP32, find the port:
+   ```powershell
+   arduino-cli board list
+   ```
+4. Compile and upload the sample sketch:
+   ```powershell
+   $PORT="COM3"  # replace with your port
+   arduino-cli upload -b esp32:esp32:esp32 -p $PORT .\tests\arduino_cli_stepper
+   ```
 
 ### First Boot
 
@@ -190,7 +212,7 @@ The firmware includes a minimal REST API and a built-in driver to spin a 28BYJ�
 - **Firmware endpoints:**
   - `POST /api/dispense` with JSON `{ "count": 1 }` enqueues `count` dispensing cycles.
   - `GET /api/status` returns basic device info and Wi‑Fi status.
-- **Driver:** `src/stepper_28byj.h` (half-step sequence).
+- **Driver:** `libraries/GoodBoyStepper/src/stepper_28byj.h` (half-step sequence).
 - **Server:** `src/main.cpp` uses `WebServer` and a background `DispenseTask()` to avoid blocking Wi‑Fi.
 
 #### Wiring (ESP32 ↔ ULN2003 ↔ 28BYJ‑48)
@@ -200,25 +222,11 @@ The firmware includes a minimal REST API and a built-in driver to spin a 28BYJ�
 - The stepper’s 5‑wire harness plugs into the ULN2003 board. ULN2003 inputs accept ESP32 3.3 V logic.
 
 #### Firmware knobs (override as needed)
-Defaults live in `src/main.cpp` and can be overridden via `platformio.ini` build flags:
+Defaults live in `src/main.cpp`. To tweak without editing code, pass defines with Arduino CLI's `--build-property` (via extra flags), for example:
 
-- `STEPPER_IN1_PIN` (default `14`)
-- `STEPPER_IN2_PIN` (default `27`)
-- `STEPPER_IN3_PIN` (default `26`)
-- `STEPPER_IN4_PIN` (default `25`)
-- `STEPS_PER_DISPENSE` (default `180` half‑steps)
-- `STEPPER_STEP_DELAY_US` (default `1200` µs per half‑step)
-
-Example `platformio.ini` overrides under `[env:esp32dev]`:
-
-```ini
-build_flags =
-  -D STEPPER_IN1_PIN=14
-  -D STEPPER_IN2_PIN=27
-  -D STEPPER_IN3_PIN=26
-  -D STEPPER_IN4_PIN=25
-  -D STEPS_PER_DISPENSE=180
-  -D STEPPER_STEP_DELAY_US=1200
+```powershell
+arduino-cli compile -b esp32:esp32:esp32 .\tests\arduino_cli_stepper \
+  --build-property "compiler.cpp.extra_flags=-D STEPS_PER_DISPENSE=200 -D STEPPER_STEP_DELAY_US=1500"
 ```
 
 #### Trigger a dispense
@@ -243,7 +251,7 @@ build_flags =
 
 #### TODO
 - Wire 28BYJ‑48 + ULN2003 to ESP32 (5 V, common GND, `IN1..IN4` → `14,27,26,25`).
-- Build and flash `esp32dev`; verify Wi‑Fi connects.
+- Build and upload firmware; verify Wi‑Fi connects.
 - Test `POST /api/dispense {"count":1}` and observe motor motion.
 - Calibrate `STEPS_PER_DISPENSE` and `STEPPER_STEP_DELAY_US` to dial in treat size.
 - Optional: point the mobile web UI to the device IP or serve the UI from ESP32.
@@ -252,10 +260,11 @@ build_flags =
  
  ```
  project-good-boy/
- ├─ src/                 # ESP32 firmware (Arduino/PlatformIO)
+ ├─ src/                 # ESP32 firmware (Arduino)
  ├─ include/             # Headers/config
  ├─ lib/                 # Portable libraries (e.g., core/)
- ├─ test/                # Native unit tests (PlatformIO env:native)
+ ├─ libraries/           # Arduino libraries (e.g., GoodBoyStepper)
+ ├─ tests/               # Local tests (g++ and Arduino CLI sketches)
  ├─ web/                 # Local simulator (Express + mobile web UI)
  ```
  

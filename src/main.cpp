@@ -1,4 +1,8 @@
 #include <Arduino.h>
+#include <stdio.h>
+#include <cstdio>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 #include <WiFi.h>
 #include <time.h>
 #include "config.h"
@@ -144,7 +148,9 @@ void setup() {
   // Minimal REST API
   server.on("/api/status", HTTP_GET, []() {
     String body = "{";
-    body += "\"deviceName\":\"" + g_cfg.device_name + "\",";
+    body += "\"deviceName\":\"";
+    body += g_cfg.device_name.c_str();
+    body += "\",";
     body += "\"wifi\":{\"connected\":"; body += WiFi.isConnected() ? "true" : "false"; body += ",\"ssid\":\""; body += WiFi.SSID(); body += "\",\"rssi\":"; body += String(WiFi.RSSI()); body += "},";
     body += "\"battery\":{\"percent\":100,\"voltage\":4.10},"; // placeholder
     body += "\"firmware\":\"" FW_VERSION "\"";
