@@ -111,6 +111,19 @@ app.get('/api/logs', (req, res) => {
   res.json({ ok: true, logs: state.logs });
 });
 
+// Preview endpoint to emulate the Arduino's /run query
+app.get('/run', (req, res) => {
+  const dir = req.query?.dir === 'reverse' ? 'reverse' : 'forward';
+  let speedVal = parseInt(req.query?.speed, 10);
+  if (!Number.isFinite(speedVal) || speedVal <= 0 || speedVal > 15) speedVal = 15;
+
+  // Simulate a brief motor action duration
+  const durationMs = 1000;
+  setTimeout(() => {
+    res.type('text/plain').send(`Stepper done (1 rev, ${dir}, ${speedVal} RPM)`);
+  }, durationMs);
+});
+
 app.listen(PORT, () => {
   console.log(`Good Boy Web running at http://localhost:${PORT}`);
 });
