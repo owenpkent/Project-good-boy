@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" type="text/css" href="main.css">
+  <meta charset="UTF-8">
+  <title>Owen's System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <header>Owen's System</header>
+  <div class="container">
+    <button class="bigbtn" onclick="dispense()">Dispense</button>
+    <div class="controls">
+      <div>
+        <label for="speed">Speed (RPM)</label>
+		<select name="speed" id="speed">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+			<option value="6">6</option>
+			<option value="7">7</option>
+			<option value="8">8</option>
+			<option value="9">9</option>
+			<option value="10">10</option>
+			<option value="11">11</option>
+			<option value="12">12</option>
+			<option value="13">13</option>
+			<option value="14">14</option>
+			<option value="15">15</option>
+			<option value="16">16</option>
+			<option value="17">17</option>
+			<option value="18">18</option>
+			<option value="19">19</option>
+			<option value="20">20</option>
+		</select>
+      </div>
+    </div>
+    <footer id="status">Status: Ready</footer>
+  </div>
+  <div class="container">
+    <button class="bigbtn" onclick="toggleRelay()">Pick Up</button>
+  </div>
+  <div class="content">
+    <h3>Wi-Fi Setup</h3>
+    <div class="card-grid">
+      <div class="card">
+        <form action="/" method="POST">
+          <p>
+            <label for="ssid">SSID</label>
+            <input type="text" id="ssid" name="ssid"><br>
+            <label for="pass">Password</label>
+            <input type="text" id="pass" name="pass"><br>
+            <input type="submit" value="Submit">
+          </p>
+        </form>
+      </div>
+    </div>
+   </div>
+  <script>
+      function dispense(){
+        const speed = document.getElementById('speed').value;
+        document.getElementById('status').innerText = "Running...";
+        fetch(`/run?speed=${speed}`)
+          .then(r => r.text())
+          .then(t => { document.getElementById('status').innerText = t; })
+          .catch(() => { document.getElementById('status').innerText = "Error"; });
+      }
+      async function toggleRelay(){
+        await fetch('/relay/toggle');
+      }
+      fetchDeviceInfo();
+    </script>
+  </body>
+</html>
+
