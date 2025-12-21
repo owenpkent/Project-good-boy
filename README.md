@@ -18,16 +18,18 @@ An open-source, battery-powered dog treat dispenser built around an ESP32. Contr
 
 ## Bill of Materials
 
-See `BOM.xlsx` for the complete parts list. Key components:
+See `BOM.csv` for the complete parts list with costs and links. Key components:
 
 | Component | Description | Link |
 |-----------|-------------|------|
-| ESP32 Dev Kit | ELEGOO ESP-WROOM-32 | [Amazon](https://www.amazon.com/ELEGOO-ESP-WROOM-32-Development-Bluetooth-Microcontroller/dp/B0D8T53CQ5/) |
-| Stepper Motor + Driver | 28BYJ-48 with ULN2003 or A4988 | [Amazon](https://www.amazon.com/ELEGOO-28BYJ-48-ULN2003-Stepper-Arduino/dp/B01CP18J4A) |
-| 5V Li-ion UPS | DWEII Battery Charger/Converter | [Amazon](https://www.amazon.com/DWEII-Lithium-Battery-Charger-Converter/dp/B0DCVRXTW8/) |
-| 18650 Batteries | (2) Lithium Ion cells | — |
-| Wire Connectors | Assorted pack | [Amazon](https://www.amazon.com/Connectors-Conductor-Combination-Assortment-Connection/dp/B09CKDWK4Q/) |
-| Mounting Hardware | Bolts, nuts, washers | — |
+| Battery | 5V Li-ion Battery Pack | [Amazon](https://www.amazon.com/dp/B0D9D8ZSV9) |
+| Nema 17 Stepper Motor | 1.9A stepper motor | [Amazon](https://www.amazon.com/dp/B07PNV7RBW) |
+| Stepper Motor Driver | A4988 or similar driver | [Amazon](https://www.amazon.com/your-orders/order-details?orderID=112-0511300-4533845) |
+| 12V to 5V DC Converter | Buck converter for power regulation | [Amazon](https://www.amazon.com/dp/B08VHZJ3C8) |
+| Relay Module | 5V relay for accessory control | [Amazon](https://www.amazon.com/dp/B0B4W7VDL7) |
+| M3 Bolts | Hardware for assembly | [Amazon](https://www.amazon.com/dp/B0C7ZRTH3Q) |
+| Jumper Wires | Assorted wire connectors | — |
+| Filament | For 3D printing enclosure | — |
 
 ### Tools Required
 
@@ -42,12 +44,12 @@ See `BOM.xlsx` for the complete parts list. Key components:
 
 | ESP32 Pin | Connection | Purpose |
 |-----------|------------|---------|
-| GPIO 5 | A4988 DIR | Stepper direction |
-| GPIO 19 | A4988 STEP | Stepper pulse |
+| GPIO 5 | Stepper DIR | Stepper direction |
+| GPIO 19 | Stepper STEP | Stepper pulse |
 | GPIO 27 | Relay IN | Relay control |
 | GND | Common ground | — |
 
-See `system_schematic.drawio` for the full schematic.
+See `system_schematic.drawio` for the full schematic. *(Note: Schematic is still being refined for accuracy.)*
 
 ---
 
@@ -55,7 +57,9 @@ See `system_schematic.drawio` for the full schematic.
 
 ```
 project-good-boy/
-├── esp32_system_owen.ino      # Main firmware (Arduino)
+├── firmware/                  # Arduino firmware
+│   └── esp32_system_owen/
+│       └── esp32_system_owen.ino
 ├── data/                      # Web UI files (uploaded to LittleFS)
 │   ├── index.html             # Control panel
 │   └── main.css               # Styles
@@ -70,7 +74,8 @@ project-good-boy/
 │   ├── spinner_5.stl
 │   ├── top.stl
 │   └── vacuum_mount.stl
-├── BOM.xlsx                   # Bill of materials
+├── BOM.csv                    # Bill of materials with costs
+├── BOM.xlsx                   # Bill of materials (spreadsheet)
 ├── system_schematic.drawio    # Circuit schematic
 ├── LICENSE
 ├── CONTRIBUTING.md
@@ -102,8 +107,8 @@ project-good-boy/
    ```
 3. Upload the sketch:
    ```powershell
-   arduino-cli compile -b esp32:esp32:esp32 esp32_system_owen.ino
-   arduino-cli upload -b esp32:esp32:esp32 -p COM3 esp32_system_owen.ino
+   arduino-cli compile -b esp32:esp32:esp32 firmware/esp32_system_owen
+   arduino-cli upload -b esp32:esp32:esp32 -p COM3 firmware/esp32_system_owen
    ```
 
 ### Upload Web Files (LittleFS)
