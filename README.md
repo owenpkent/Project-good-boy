@@ -69,7 +69,7 @@ Required libraries:
    - `AsyncTCP`
    - `DNSServer`
    - `ESPmDNS`
-   - `LittleFS` https://randomnerdtutorials.com/esp32-littlefs-arduino-ide/
+   - `LittleFS` [Random Nerd Tutorials](https://randomnerdtutorials.com/esp32-littlefs-arduino-ide/)
 
 ### Upload Firmware
 
