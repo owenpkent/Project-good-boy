@@ -1,8 +1,13 @@
 # Project Good Boy
 
-An open-source, battery-powered dog treat dispenser built around an ESP32. Control it from your phone via a simple web interface—no cloud, no app install required.
+An open-source battery powered dog treat dispenser that is activated via a web interface and is wheelchair mountable.
+It is currently compatible with being mounted on 40x40 aluminum extrusions. 
 
-**Want one built for you?** Open an issue or reach out—we'd be happy to help!
+**Want one built for you? Or modifications/additional support?** Reach out—we'd be happy to help!
+
+## Contact
+Marshall Saltz - https://saltztech.com/
+Owen Kent - https://okstud.io/
 
 ---
 
@@ -10,112 +15,67 @@ An open-source, battery-powered dog treat dispenser built around an ESP32. Contr
 
 - **Wi-Fi Control** — Operates on your local network or as its own access point
 - **Web Interface** — Phone-friendly UI served directly from the device
-- **No Cloud Required** — Everything runs locally on the ESP32
-- **Battery Powered** — Uses 18650 Li-ion cells with USB-C charging
+- **Battery Powered** — Uses a 12 V Lipo to power the system
 - **Accessible Design** — Large buttons, simple controls, wheelchair-mountable
-
+- **Modular** — Components of your choosing can be easily added to or removed from the system
 ---
 
 ## Bill of Materials
 
-See `BOM.csv` for the complete parts list with costs and links. Key components:
-
-| Component | Description | Link |
+| Component | Amount | Link |
 |-----------|-------------|------|
-| Battery | 5V Li-ion Battery Pack | [Amazon](https://www.amazon.com/dp/B0D9D8ZSV9) |
-| Nema 17 Stepper Motor | 1.9A stepper motor | [Amazon](https://www.amazon.com/dp/B07PNV7RBW) |
-| Stepper Motor Driver | A4988 or similar driver | [Amazon](https://www.amazon.com/your-orders/order-details?orderID=112-0511300-4533845) |
-| 12V to 5V DC Converter | Buck converter for power regulation | [Amazon](https://www.amazon.com/dp/B08VHZJ3C8) |
-| Relay Module | 5V relay for accessory control | [Amazon](https://www.amazon.com/dp/B0B4W7VDL7) |
-| M3 Bolts | Hardware for assembly | [Amazon](https://www.amazon.com/dp/B0C7ZRTH3Q) |
-| Jumper Wires | Assorted wire connectors | — |
-| Filament | For 3D printing enclosure | — |
+| Battery | 1 | [Amazon](https://www.amazon.com/dp/B0D9D8ZSV9?ref=ppx_yo2ov_dt_b_fed_asin_title) |
+| Nema 17 Stepper Motor | 1 | [Amazon](https://www.amazon.com/dp/B07PNV7RBW) |
+| A4988 Stepper Motor Driver | 1 | [Amazon](https://www.amazon.com/your-orders/order-details?orderID=112-0511300-4533845) |
+| 12V to 5V DC Converter | 1 | [Amazon](https://www.amazon.com/dp/B08VHZJ3C8) |
+| M3 Bolts | 4 | [Amazon](https://www.amazon.com/dp/B0C7ZRTH3Q) |
+| Jumper Wires | —| — |
+| Filament | — | — |
+| T-nuts for mounting | 5 | — |
+| T-nut compatible bolts | 5 | — |
+| ESP32 Dev Kit | 1 | — |
+| Wagu Wire Connectors | — | — |
+| ArtResin or another safe resin | — | — |
 
 ### Tools Required
 
-- Soldering iron
 - Pliers
-- Screwdriver
+- Electronics screwdriver
 - USB-C cable (for uploading firmware and charging)
+- 3D printer
 
 ---
 
 ## Wiring
 
-| ESP32 Pin | Connection | Purpose |
-|-----------|------------|---------|
-| GPIO 5 | Stepper DIR | Stepper direction |
-| GPIO 19 | Stepper STEP | Stepper pulse |
-| GPIO 27 | Relay IN | Relay control |
-| GND | Common ground | — |
-
-See `system_schematic.drawio` for the full schematic. *(Note: Schematic is still being refined for accuracy.)*
-
----
-
-## Repository Structure
-
-```
-project-good-boy/
-├── firmware/                  # Arduino firmware
-│   └── esp32_system_owen/
-│       └── esp32_system_owen.ino
-├── data/                      # Web UI files (uploaded to LittleFS)
-│   ├── index.html             # Control panel
-│   └── main.css               # Styles
-├── models/                    # 3D printable parts
-│   ├── agitator_1.stl
-│   ├── bottom.stl
-│   ├── disp_4.stl
-│   ├── holder_5.stl
-│   ├── lid_5.stl
-│   ├── middle.stl
-│   ├── spacer.stl
-│   ├── spinner_5.stl
-│   ├── top.stl
-│   └── vacuum_mount.stl
-├── BOM.csv                    # Bill of materials with costs
-├── BOM.xlsx                   # Bill of materials (spreadsheet)
-├── system_schematic.drawio    # Circuit schematic
-├── LICENSE
-├── CONTRIBUTING.md
-└── README.md
-```
+![Schematic](media/goodboy_schematic.png)
 
 ---
 
 ## Building & Uploading
 
+### Assembly Instructions
+
+Assembly video or image series needed here!
+
 ### Prerequisites
 
-1. Install [Arduino IDE](https://www.arduino.cc/en/software) or [Arduino CLI](https://arduino.github.io/arduino-cli/)
-2. Install ESP32 board support:
-   ```
-   arduino-cli core install esp32:esp32
-   ```
-3. Install required libraries:
-   - `ESPAsyncWebServer`
+Install [Arduino IDE](https://www.arduino.cc/en/software)
+Required libraries:
+   - `Wifi`
+   - `ESPAsyncWebServer.h`
    - `AsyncTCP`
-   - `LittleFS`
+   - `DNSServer`
+   - `ESPmDNS`
+   - `LittleFS` https://randomnerdtutorials.com/esp32-littlefs-arduino-ide/
 
 ### Upload Firmware
 
-1. Connect the ESP32 via USB-C
-2. Find your port:
-   ```powershell
-   arduino-cli board list
-   ```
-3. Upload the sketch:
-   ```powershell
-   arduino-cli compile -b esp32:esp32:esp32 firmware/esp32_system_owen
-   arduino-cli upload -b esp32:esp32:esp32 -p COM3 firmware/esp32_system_owen
-   ```
+1. Connect the ESP32 via USB-C and open Arduino IDE
+   
+2. Upload the sketch
 
-### Upload Web Files (LittleFS)
-
-Upload the `data/` folder to the ESP32's filesystem using the [Arduino ESP32 LittleFS Uploader](https://github.com/lorol/arduino-esp32littlefs-plugin) or the Arduino IDE plugin.
-
----
+3. Upload the data folder to the ESP32 using LittleFS
 
 ## Usage
 
@@ -128,32 +88,21 @@ Upload the `data/` folder to the ESP32's filesystem using the [Arduino ESP32 Lit
 
 ### Normal Operation
 
-1. Connect to the same Wi-Fi network as the device
+1. Connect to the same Wifi network as the device
 2. Open browser: `http://goodboy.local` (or check serial output for IP)
 3. Use the web interface:
    - **Dispense** — Triggers the motor to dispense a treat
-   - **Speed** — Adjust RPM (1–20)
-   - **Pick Up** — Toggles the relay (for vacuum or other accessories)
+   - **Speed** — Adjusts motor speed (1–20)
 
-### Serial Monitor
-
-Connect via USB and open Serial Monitor at **115200 baud** to see:
-- Connection status
-- IP address
-- Motor commands
-- Debug output
+Can also be used in AP mode by following steps 1-3 of First Boot
 
 ---
 
-## Troubleshooting
+## TODO
 
-| Issue | Solution |
-|-------|----------|
-| No Wi-Fi network visible | Check power; verify ESP32 LED is on |
-| Can't access web interface | Confirm you're on the GoodBoy network; try `http://192.168.4.1` |
-| Motor not spinning | Check wiring; verify GPIO pins match your setup |
-| Treats not dispensing | Adjust speed; check auger alignment |
-
+[] Include assembly instructions/video
+[] Remove vacuum code from ino file
+[] Maintainance instructions 
 ---
 
 ## Contributing
