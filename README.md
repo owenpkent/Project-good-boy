@@ -6,8 +6,10 @@ It is currently compatible with being mounted on 40x40 aluminum extrusions.
 **Want one built for you? Or modifications/additional support?** Reach out—we'd be happy to help!
 
 ## Contact
-Marshall Saltz - https://saltztech.com/
+
 Owen Kent - https://okstud.io/
+
+Marshall Saltz - https://saltztech.com/
 
 ---
 
@@ -100,9 +102,9 @@ Can also be used in AP mode by following steps 1-3 of First Boot
 
 ## TODO
 
--[] Include assembly instructions/video
--[] Remove vacuum code from ino file
--[] Maintainance instructions 
+- [] Include assembly instructions/video
+- [] Remove vacuum code from ino file
+- [] Maintainance instructions 
 ---
 
 ## Contributing
