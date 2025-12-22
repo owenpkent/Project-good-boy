@@ -104,7 +104,8 @@ Can also be used in AP mode by following steps 1-3 of First Boot
 
 - [ ] Include assembly instructions/video
 - [ ] Remove vacuum code from ino file
-- [ ] Maintainance instructions 
+- [ ] Maintainance instructions
+- [ ] Video of operation
 ---
 
 ## Contributing
