@@ -123,4 +123,4 @@ MIT License — see `LICENSE`.
 
 Built with love for a very good boy.
 
-For additional assistance with connecting the stepper motor driver, visit: https://lastminuteengineers.com/a4988-stepper-motor-driver-arduino-tutorial/
+For additional assistance with connecting the stepper motor driver, visit: [Last Minute Engineers](https://lastminuteengineers.com/a4988-stepper-motor-driver-arduino-tutorial/)
