@@ -73,11 +73,13 @@ Required libraries:
 
 ### Upload Firmware
 
-1. Connect the ESP32 via USB-C and open Arduino IDE
-   
-2. Upload the sketch
+1. Download project_goodboy folder
 
-3. Upload the data folder to the ESP32 using LittleFS
+2. Connect the ESP32 via USB-C and open project_goodboy.ino in Arduino IDE
+   
+3. Upload the sketch
+
+4. Upload the data folder to the ESP32 using LittleFS (See [Random Nerd Tutorials](https://randomnerdtutorials.com/esp32-littlefs-arduino-ide/) for further instruction)
 
 ## Usage
 
@@ -85,7 +87,7 @@ Required libraries:
 
 1. Power on the device
 2. Connect to Wi-Fi network: **GoodBoy** (password: `buddythedog`)
-3. Open browser: `http://192.168.4.1`
+3. Open browser: `http://192.168.4.1` if pop-up does not open automatically
 4. Enter your home Wi-Fi credentials to connect the device to your network
 
 ### Normal Operation

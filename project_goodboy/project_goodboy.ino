@@ -11,8 +11,6 @@
 
   Last Minute Engineers - https://lastminuteengineers.com/a4988-stepper-motor-driver-arduino-tutorial/
 
-  ESP32 I/O - https://esp32io.com/tutorials/esp32-relay
-
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files.
 
@@ -27,7 +25,6 @@
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 
-#define RELAY_PIN 27
 #define STEPS_PER_REV 200
 
 const char *AP_SSID = "GoodBoy";
@@ -46,7 +43,6 @@ const int dir = 5;
 const int stepp = 19;
 
 String ssid, pass;
-bool relayOn = false;
 
 TaskHandle_t TaskWiFiHandle = NULL;
 QueueHandle_t stepperQueue = NULL;
@@ -106,8 +102,6 @@ void RebootTask(void *param) {
 *********/
 void setup() {
   Serial.begin(115200);
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
   pinMode(stepp, OUTPUT);
   pinMode(dir, OUTPUT);
   initLittleFS();
@@ -213,7 +207,6 @@ void startAP() {
 /*******
 * startWebServer - void funct
 * Starts webpage, controls:
-* relay (vacuum)
 * stepper (dog treat dispenser)
 * saving wifi credentials
 ********/
@@ -227,16 +220,9 @@ void startWebServer() {
 
   server.serveStatic("/", LittleFS, "/");
 
-  server.on("/relay/toggle", HTTP_GET, [](AsyncWebServerRequest *request) {
-    relayOn = !relayOn;
-    digitalWrite(RELAY_PIN, relayOn ? HIGH : LOW);
-    Serial.printf("Relay toggled -> %s\n", relayOn ? "ON" : "OFF");
-    request->send(200, "text/plain", relayOn ? "Relay ON" : "Relay OFF");
-  });
-
   /****
   * Runs stepper:
-  * sets speed (1-20)
+  * sets speed (1-19)
   *****/
   server.on("/run", HTTP_GET, [](AsyncWebServerRequest *request) {
     int spd = 1;

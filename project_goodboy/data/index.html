@@ -3,7 +3,7 @@
 <head>
 <link rel="stylesheet" type="text/css" href="main.css">
   <meta charset="UTF-8">
-  <title>Owen's System</title>
+  <title>Project Goodboy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -11,7 +11,7 @@
   <link rel="icon" href="data:,">
 </head>
 <body>
-  <header>Owen's System</header>
+  <header>Project Goodboy</header>
   <div class="container">
     <button class="bigbtn" onclick="dispense()">Dispense</button>
     <div class="controls">
@@ -37,14 +37,10 @@
 			<option value="17">17</option>
 			<option value="18">18</option>
 			<option value="19">19</option>
-			<option value="20">20</option>
 		</select>
       </div>
     </div>
     <footer id="status">Status: Ready</footer>
-  </div>
-  <div class="container">
-    <button class="bigbtn" onclick="toggleRelay()">Pick Up</button>
   </div>
   <div class="content">
     <h3>Wi-Fi Setup</h3>
@@ -71,10 +67,6 @@
           .then(t => { document.getElementById('status').innerText = t; })
           .catch(() => { document.getElementById('status').innerText = "Error"; });
       }
-      async function toggleRelay(){
-        await fetch('/relay/toggle');
-      }
-      fetchDeviceInfo();
     </script>
   </body>
 </html>
