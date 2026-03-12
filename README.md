@@ -30,14 +30,15 @@ Marshall Saltz - https://saltztech.com/
 | Nema 17 Stepper Motor | 1 | [Amazon](https://www.amazon.com/dp/B07PNV7RBW) |
 | A4988 Stepper Motor Driver | 1 | [Amazon](https://www.amazon.com/your-orders/order-details?orderID=112-0511300-4533845) |
 | 12V to 5V DC Converter | 1 | [Amazon](https://www.amazon.com/dp/B08VHZJ3C8) |
-| M3 Bolts | 4 | [Amazon](https://www.amazon.com/dp/B0C7ZRTH3Q) |
+| 8mm M3 Bolts | 4 | [Amazon](https://www.amazon.com/dp/B0C7ZRTH3Q) |
 | Jumper Wires | —| — |
-| Filament | — | — |
+| Filament (preferably PETG) | — | — |
 | T-nuts for mounting | 5 | — |
 | T-nut compatible bolts | 5 | — |
 | ESP32 Dev Kit | 1 | — |
 | Wagu Wire Connectors | — | — |
 | ArtResin or another safe resin | — | — |
+| 100 uF Capacitor | 1 | - |
 
 ### Tools Required
 
@@ -52,6 +53,15 @@ Marshall Saltz - https://saltztech.com/
 
 ![Schematic](media/goodboy_schematic.png)
 
+![Wiring](media/goodboy_wiring.png)
+
+The pins should be connected as follows:
+
+| 12V Li-on battery | 12V->5V Voltage Regulator | ESP32 Dev Kit | Motor Driver | Motor | Capacitor |
+|-------------------|---------------------------|---------------|--------------|-------|-----------|
+| +12V | +12V | - | VMOT | - | + |
+| GND | GND | GND | GND | - | GND |
+| - | +5V | Vin | VDD | - | - |
 ---
 
 ## Building & Uploading

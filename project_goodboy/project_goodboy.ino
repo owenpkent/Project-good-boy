@@ -11,6 +11,8 @@
 
   Last Minute Engineers - https://lastminuteengineers.com/a4988-stepper-motor-driver-arduino-tutorial/
 
+  Adafruit Learn - https://learn.adafruit.com/ir-breakbeam-sensors/arduino
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files.
 
@@ -26,6 +28,10 @@
 #include <ESPmDNS.h>
 
 #define STEPS_PER_REV 200
+#define MIN_SPEED 1
+#define MAX_SPEED 20
+#define STEP_DELAY_BASE 21000
+#define DIVISOR 2
 
 const char *AP_SSID = "GoodBoy";
 const char *AP_PASS = "buddythedog";
@@ -41,9 +47,9 @@ AsyncWebServer server(80);
 
 const int dir = 5;
 const int stepp = 19;
-
+const int breakBeam = 2;
 String ssid, pass;
-
+int breakState = 0;
 TaskHandle_t TaskWiFiHandle = NULL;
 QueueHandle_t stepperQueue = NULL;
 
@@ -69,14 +75,49 @@ void StepperTask(void *parameter) {
   StepperJob job;
   for (;;) {
     if (xQueueReceive(stepperQueue, &job, portMAX_DELAY) == pdTRUE) {
-      int spd = job.speed;
-	    digitalWrite(dir, HIGH);
+      int spd = constrain(job.speed, MIN_SPEED, MAX_SPEED);
+      bool treat = false;
+      digitalWrite(dir, HIGH);
       for (int i = 0; i < STEPS_PER_REV; ++i) {
         digitalWrite(stepp, HIGH);
-		    delayMicroseconds(21000-(spd*1000));
+        delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
         digitalWrite(stepp, LOW);
-        delayMicroseconds(21000-(spd*1000));
-        vTaskDelay(pdMS_TO_TICKS(1));
+        delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
+        breakState = digitalRead(breakBeam);
+        if (breakState == LOW){
+          treat = true;
+          Serial.println("Stepper run complete.");
+          break;
+        }
+      }
+      int count = 0;
+      while (!treat && count < 5){
+          digitalWrite(dir, HIGH);
+          for (int i = 0; i < STEPS_PER_REV/DIVISOR; ++i){
+            
+            digitalWrite(stepp, HIGH);
+            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
+            digitalWrite(stepp, LOW);
+            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
+            breakState = digitalRead(breakBeam);
+            if (breakState == LOW){
+              treat = true;
+              break;
+              }
+          }
+          digitalWrite(dir, LOW);
+          for (int i = 0; i < STEPS_PER_REV/DIVISOR; ++i){
+            digitalWrite(stepp, HIGH);
+            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
+            digitalWrite(stepp, LOW);
+            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
+            breakState = digitalRead(breakBeam);
+            if (breakState == LOW){
+              treat = true;
+              break;
+              }
+          }
+          count++;
       }
       Serial.println("Stepper run complete.");
     }
@@ -102,8 +143,12 @@ void RebootTask(void *param) {
 *********/
 void setup() {
   Serial.begin(115200);
+  delay(1000);
   pinMode(stepp, OUTPUT);
   pinMode(dir, OUTPUT);
+  pinMode(breakBeam, INPUT);
+  Serial.print("Reset reason: ");
+  Serial.println(esp_reset_reason());
   initLittleFS();
 
   stepperQueue = xQueueCreate(1, sizeof(StepperJob));
@@ -138,10 +183,16 @@ void setup() {
 * Opens connection to controls webpage.
 *****************/
 void WiFiTask(void *parameter) {
+  Serial.println("WiFi Task started");
+  
   ssid = loadCredentials(LittleFS, ssidPath);
   pass = loadCredentials(LittleFS, passPath);
   
+  Serial.print("Loaded SSID: ");
+  Serial.println(ssid.isEmpty() ? "(empty)" : ssid);
+  
   if (connectWiFi()) {
+    Serial.println("Connected to WiFi");
     if (MDNS.begin("goodboy")) {
      Serial.println("mDNS started: http://goodboy.local");
     } 
@@ -150,10 +201,13 @@ void WiFiTask(void *parameter) {
     }
     } 
   else {
+    Serial.println("Starting AP mode");
     startAP();
   }
 
+  Serial.println("Starting web server");
   startWebServer();
+  Serial.println("Web server started");
   
   vTaskSuspend(NULL);  
 }
@@ -193,15 +247,21 @@ bool connectWiFi() {
 * Starts access point at: 192.168.4.1
 ***********/
 void startAP() {
+  Serial.println("Setting WiFi mode to AP");
   WiFi.mode(WIFI_AP);
   IPAddress apIP(192, 168, 4, 1);
   IPAddress gateway(192, 168, 4, 1);
   IPAddress subnet(255, 255, 255, 0);
+  Serial.println("Configuring AP");
   WiFi.softAPConfig(apIP, gateway, subnet);
+  Serial.print("Starting AP: ");
+  Serial.println(AP_SSID);
   WiFi.softAP(AP_SSID, AP_PASS);
+  Serial.println("Starting DNS server");
   dnsServer.start(53, "*", WiFi.softAPIP()); 
   Serial.print("AP IP: ");
   Serial.println(WiFi.softAPIP());
+  Serial.println("AP setup complete");
 }
 
 /*******
@@ -212,26 +272,36 @@ void startAP() {
 ********/
 void startWebServer() {
   server.onNotFound([](AsyncWebServerRequest *request){
-    request->redirect("/");
-  });
+  request->redirect("http://192.168.4.1/");
+});
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(LittleFS, "/index.html", "text/html");
   });
 
   server.serveStatic("/", LittleFS, "/");
+  server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->redirect("/");
+});
 
+server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->redirect("/");
+});
+
+server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->redirect("/");
+});
   /****
   * Runs stepper:
   * sets speed (1-19)
   *****/
   server.on("/run", HTTP_GET, [](AsyncWebServerRequest *request) {
-    int spd = 1;
+    int spd = MIN_SPEED;
     if (request->hasParam("speed")) {
-      spd = request->getParam("speed")->value().toInt();
+      spd = constrain(request->getParam("speed")->value().toInt(), MIN_SPEED, MAX_SPEED);
     }
     StepperJob job;
-    job.speed = abs(spd);
-    xQueueOverwrite(stepperQueue, &job);
+    job.speed = spd;
+    xQueueSend(stepperQueue, &job, 0);
     request->send(200, "text/plain", "Stepper command updated");
   });
 
@@ -253,9 +323,7 @@ void startWebServer() {
     request->send(200, "text/plain", "Credentials saved, restarting in 5s");
     const uint32_t delayMs = 5000;
     xTaskCreatePinnedToCore(
-      [](void *arg)->void {
-        RebootTask(arg);
-      },
+      RebootTask,
       "rebooter",
       2048,
       (void*)(uintptr_t)delayMs,
@@ -263,7 +331,9 @@ void startWebServer() {
       NULL,
       1);
   });
-  
+  server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){
+  request->redirect("/");
+});
   server.begin();
 }
 
