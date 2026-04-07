@@ -39,10 +39,16 @@ header {
   cursor: pointer; 
   width: 100%; 
   transition: 0.2s ease;
+  margin: 10px 5px; 
+}
+
+.bigbtn:nth-of-type(2) {
+  background-color: red;
+  color: white;
 }
 
 .bigbtn:hover { 
-  background: #2563eb; 
+  background-color: white; 
 }
 
 .controls { 

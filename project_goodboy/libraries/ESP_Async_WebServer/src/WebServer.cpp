@@ -158,7 +158,7 @@ AsyncCallbackWebHandler &AsyncWebServer::on(
 ) {
   AsyncCallbackWebHandler *handler = new AsyncCallbackWebHandler();
   handler->setUri(std::move(uri));
-  handler->setMethod(method);
+  handler->setMethod(std::move(method));
   handler->onRequest(onRequest);
   handler->onUpload(onUpload);
   handler->onBody(onBody);
@@ -169,7 +169,7 @@ AsyncCallbackWebHandler &AsyncWebServer::on(
 #if ASYNC_JSON_SUPPORT == 1
 AsyncCallbackJsonWebHandler &AsyncWebServer::on(AsyncURIMatcher uri, WebRequestMethodComposite method, ArJsonRequestHandlerFunction onBody) {
   AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler(std::move(uri), onBody);
-  handler->setMethod(method);
+  handler->setMethod(std::move(method));
   addHandler(handler);
   return *handler;
 }

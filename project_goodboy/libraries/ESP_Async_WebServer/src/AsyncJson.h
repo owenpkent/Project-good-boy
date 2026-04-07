@@ -6,6 +6,8 @@
 #include <ESPAsyncWebServer.h>
 #include "ChunkPrint.h"
 
+#include <utility>
+
 #if ASYNC_JSON_SUPPORT == 1
 
 #if ARDUINOJSON_VERSION_MAJOR == 6
@@ -104,7 +106,7 @@ public:
 #endif
 
   void setMethod(WebRequestMethodComposite method) {
-    _method = method;
+    _method = std::move(method);
   }
   void setMaxContentLength(int maxContentLength) {
     _maxContentLength = maxContentLength;

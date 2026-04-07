@@ -205,6 +205,9 @@ public:
     return _lastId;
   }
   size_t packetsWaiting() const {
+#ifdef ESP32
+    std::lock_guard<std::recursive_mutex> lock(_lockmq);
+#endif
     return _messageQueue.size();
   };
 

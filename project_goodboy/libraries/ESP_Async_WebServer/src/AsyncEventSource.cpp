@@ -192,6 +192,7 @@ AsyncEventSourceClient::AsyncEventSourceClient(AsyncWebServerRequest *request, A
 
 AsyncEventSourceClient::~AsyncEventSourceClient() {
 #ifdef ESP32
+  // Protect message queue access (size checks and modifications) which is not thread-safe.
   std::lock_guard<std::recursive_mutex> lock(_lockmq);
 #endif
   _messageQueue.clear();
@@ -199,15 +200,15 @@ AsyncEventSourceClient::~AsyncEventSourceClient() {
 }
 
 bool AsyncEventSourceClient::_queueMessage(const char *message, size_t len) {
+#ifdef ESP32
+  // Protect message queue access (size checks and modifications) which is not thread-safe.
+  std::lock_guard<std::recursive_mutex> lock(_lockmq);
+#endif
+
   if (_messageQueue.size() >= SSE_MAX_QUEUED_MESSAGES) {
     async_ws_log_w("Event message queue overflow: discard message");
     return false;
   }
-
-#ifdef ESP32
-  // length() is not thread-safe, thus acquiring the lock before this call..
-  std::lock_guard<std::recursive_mutex> lock(_lockmq);
-#endif
 
   if (_client) {
     _messageQueue.emplace_back(message, len);
@@ -230,15 +231,15 @@ bool AsyncEventSourceClient::_queueMessage(const char *message, size_t len) {
 }
 
 bool AsyncEventSourceClient::_queueMessage(AsyncEvent_SharedData_t &&msg) {
+#ifdef ESP32
+  // Protect message queue access (size checks and modifications) which is not thread-safe.
+  std::lock_guard<std::recursive_mutex> lock(_lockmq);
+#endif
+
   if (_messageQueue.size() >= SSE_MAX_QUEUED_MESSAGES) {
     async_ws_log_w("Event message queue overflow: discard message");
     return false;
   }
-
-#ifdef ESP32
-  // length() is not thread-safe, thus acquiring the lock before this call..
-  std::lock_guard<std::recursive_mutex> lock(_lockmq);
-#endif
 
   if (_client) {
     _messageQueue.emplace_back(std::move(msg));
@@ -261,7 +262,7 @@ bool AsyncEventSourceClient::_queueMessage(AsyncEvent_SharedData_t &&msg) {
 
 void AsyncEventSourceClient::_onAck(size_t len __attribute__((unused)), uint32_t time __attribute__((unused))) {
 #ifdef ESP32
-  // Same here, acquiring the lock early
+  // Protect message queue access (size checks and modifications) which is not thread-safe.
   std::lock_guard<std::recursive_mutex> lock(_lockmq);
 #endif
 
@@ -288,11 +289,11 @@ void AsyncEventSourceClient::_onAck(size_t len __attribute__((unused)), uint32_t
 }
 
 void AsyncEventSourceClient::_onPoll() {
-  if (_messageQueue.size()) {
 #ifdef ESP32
-    // Same here, acquiring the lock early
-    std::lock_guard<std::recursive_mutex> lock(_lockmq);
+  // Protect message queue access (size checks and modifications) which is not thread-safe.
+  std::lock_guard<std::recursive_mutex> lock(_lockmq);
 #endif
+  if (_messageQueue.size()) {
     _runQueue();
   }
 }
@@ -367,13 +368,16 @@ void AsyncEventSource::_addClient(AsyncEventSourceClient *client) {
   if (!client) {
     return;
   }
-#ifdef ESP32
-  std::lock_guard<std::recursive_mutex> lock(_client_queue_lock);
-#endif
-  _clients.emplace_back(client);
+
   if (_connectcb) {
     _connectcb(client);
   }
+
+#ifdef ESP32
+  std::lock_guard<std::recursive_mutex> lock(_client_queue_lock);
+#endif
+
+  _clients.emplace_back(client);
 
   _adjust_inflight_window();
 }

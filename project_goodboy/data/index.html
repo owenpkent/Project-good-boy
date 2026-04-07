@@ -12,34 +12,26 @@
 </head>
 <body>
   <header>Project Goodboy</header>
+  <div>Battery Voltage: <span id="voltage">--</span> V</div>
   <div class="container">
-    <button class="bigbtn" onclick="dispense()">Dispense</button>
     <div class="controls">
-      <div>
-        <label for="speed">Speed (RPM)</label>
-		<select name="speed" id="speed">
-			<option value="1">1</option>
-			<option value="2">2</option>
-			<option value="3">3</option>
-			<option value="4">4</option>
-			<option value="5">5</option>
-			<option value="6">6</option>
-			<option value="7">7</option>
-			<option value="8">8</option>
-			<option value="9">9</option>
-			<option value="10">10</option>
-			<option value="11">11</option>
-			<option value="12">12</option>
-			<option value="13">13</option>
-			<option value="14">14</option>
-			<option value="15">15</option>
-			<option value="16">16</option>
-			<option value="17">17</option>
-			<option value="18">18</option>
-			<option value="19">19</option>
+    <div>
+      <label for="speed">Speed (RPM)</label>
+		  <select name="speed" id="speed">
+			<option value="200">2</option>
+			<option value="300">3</option>
+			<option value="400">4</option>
+			<option value="500">5</option>
+			<option value="600">6</option>
+			<option value="700">7</option>
+			<option value="800">8</option>
+			<option value="900">9</option>
+			<option value="1000">10</option>
 		</select>
-      </div>
     </div>
+    </div>
+    <button class="bigbtn" onclick="dispense()">Dispense</button>
+    <button class="bigbtn" onclick="stop_stepper()">Stop</button>
     <footer id="status">Status: Ready</footer>
   </div>
   <div class="content">
@@ -57,16 +49,35 @@
         </form>
       </div>
     </div>
-   </div>
-  <script>
-      function dispense(){
-        const speed = document.getElementById('speed').value;
-        document.getElementById('status').innerText = "Running...";
-        fetch(`/run?speed=${speed}`)
-          .then(r => r.text())
-          .then(t => { document.getElementById('status').innerText = t; })
-          .catch(() => { document.getElementById('status').innerText = "Error"; });
-      }
+  </div>
+    <script>
+    function updateVoltage() {
+      fetch('/voltage')
+          .then(r => r.json())
+          .then(data => {
+              document.getElementById('voltage').innerText = data.voltage;
+          })
+          .catch(() => {
+              document.getElementById('voltage').innerText = "Error";
+          });
+    }
+
+   setInterval(updateVoltage, 1000);
+
+    function dispense(){
+     const speed = document.getElementById('speed').value;
+      document.getElementById('status').innerText = "Running...";
+      fetch(`/run?speed=${speed}`)
+      .then(r => r.text())
+      .then(t => { document.getElementById('status').innerText = t; })
+      .catch(() => { document.getElementById('status').innerText = "Error"; });
+    }
+    function stop_stepper(){
+     fetch(`/stop`)
+      .then(r => r.text())
+      .then(t => { document.getElementById('status').innerText = t; })
+      .catch(() => { document.getElementById('status').innerText = "Error"; });
+    } 
     </script>
   </body>
 </html>

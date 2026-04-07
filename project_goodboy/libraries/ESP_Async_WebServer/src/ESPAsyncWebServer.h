@@ -66,6 +66,12 @@
 #define ASYNCWEBSERVER_WIFI_SUPPORTED 0
 #endif
 
+// Enable integration with other HTTP libraries
+#if defined(HTTP_ANY) || defined(http_parser_h)
+#define ASYNCWEBSERVER_HTTP_METHOD_INTEGRATION
+#define ASYNCWEBSERVER_NO_GLOBAL_HTTP_METHODS
+#endif
+
 class AsyncWebServer;
 class AsyncWebServerRequest;
 class AsyncWebServerResponse;
@@ -81,36 +87,163 @@ class AsyncMiddlewareChain;
 // Namespace for web request method defines
 namespace AsyncWebRequestMethod {
 // The long name here is because we sometimes include this in the global namespace
-enum AsyncWebRequestMethodType {
-  HTTP_GET = 0b0000000000000001,
-  HTTP_POST = 0b0000000000000010,
-  HTTP_DELETE = 0b0000000000000100,
-  HTTP_PUT = 0b0000000000001000,
-  HTTP_PATCH = 0b0000000000010000,
-  HTTP_HEAD = 0b0000000000100000,
-  HTTP_OPTIONS = 0b0000000001000000,
-  HTTP_PROPFIND = 0b0000000010000000,
-  HTTP_LOCK = 0b0000000100000000,
-  HTTP_UNLOCK = 0b0000001000000000,
-  HTTP_PROPPATCH = 0b0000010000000000,
-  HTTP_MKCOL = 0b0000100000000000,
-  HTTP_MOVE = 0b0001000000000000,
-  HTTP_COPY = 0b0010000000000000,
-  HTTP_RESERVED = 0b0100000000000000,
-  HTTP_ANY = 0b0111111111111111,
+enum AsyncWebRequestMethodType : uint32_t {
+  HTTP_UNKNOWN = 0u,
+
+  HTTP_DELETE = 1u << 0,
+  HTTP_GET = 1u << 1,
+  HTTP_HEAD = 1u << 2,
+  HTTP_POST = 1u << 3,
+  HTTP_PUT = 1u << 4,
+
+  /* pathological */
+  HTTP_CONNECT = 1u << 5,
+  HTTP_OPTIONS = 1u << 6,
+  HTTP_TRACE = 1u << 7,
+
+  /* WebDAV */
+  HTTP_COPY = 1u << 8,
+  HTTP_LOCK = 1u << 9,
+  HTTP_MKCOL = 1u << 10,
+  HTTP_MOVE = 1u << 11,
+  HTTP_PROPFIND = 1u << 12,
+  HTTP_PROPPATCH = 1u << 13,
+  HTTP_SEARCH = 1u << 14,
+  HTTP_UNLOCK = 1u << 15,
+  HTTP_BIND = 1u << 16,
+  HTTP_REBIND = 1u << 17,
+  HTTP_UNBIND = 1u << 18,
+  HTTP_ACL = 1u << 19,
+
+  /* subversion */
+  // HTTP_REPORT
+  // HTTP_MKACTIVITY
+  // HTTP_CHECKOUT
+  // HTTP_MERGE
+
+  /* upnp */
+  // HTTP_MSEARCH
+  // HTTP_NOTIFY
+  // HTTP_SUBSCRIBE
+  // HTTP_UNSUBSCRIBE
+
+  /* RFC-5789 */
+  HTTP_PATCH = 1u << 20,
+  HTTP_PURGE = 1u << 21,
+
+  /* CalDAV */
+  // HTTP_MKCALENDAR
+
+  /* RFC-2068, section 19.6.1.2 */
+  HTTP_LINK = 1u << 22,
+  HTTP_UNLINK = 1u << 23,
+
+  /* icecast */
+  // HTTP_SOURCE
+
+  HTTP_INVALID = 1u << 31  // Sentinel
 };
+
 };  // namespace AsyncWebRequestMethod
 
 typedef AsyncWebRequestMethod::AsyncWebRequestMethodType WebRequestMethod;
-typedef uint16_t WebRequestMethodComposite;
+class WebRequestMethodComposite {
+  uint32_t mask;
 
-// Type-safe helper functions for composite methods
-extern constexpr inline WebRequestMethodComposite operator|(WebRequestMethodComposite l, WebRequestMethod r) {
-  return l | static_cast<WebRequestMethodComposite>(r);
-};
-extern constexpr inline WebRequestMethodComposite operator|(WebRequestMethod l, WebRequestMethod r) {
+private:
+  constexpr WebRequestMethodComposite(uint32_t m) : mask(m){};
+
+public:
+  // Default constructor: by default, matches nothing
+  constexpr WebRequestMethodComposite() : mask(0){};
+
+  // Constructor: allows implicit conversion from WebRequestMethod
+  constexpr WebRequestMethodComposite(WebRequestMethod m) : mask(static_cast<uint32_t>(m)){};
+
+  // Combine composites
+  constexpr inline WebRequestMethodComposite operator|(const WebRequestMethodComposite &r) const {
+    return WebRequestMethodComposite(mask | r.mask);
+  };
+
+  // == operator for composite
+  constexpr inline bool operator==(const WebRequestMethodComposite &r) const {
+    return mask == r.mask;
+  };
+
+  constexpr inline bool operator!=(const WebRequestMethodComposite &r) const {
+    return mask != r.mask;
+  };
+
+  // Check for a match
+  constexpr inline bool matches(WebRequestMethod m) const {
+    return mask & static_cast<uint32_t>(m);
+  };
+
+  constexpr inline bool operator&(WebRequestMethod m) const {
+    return matches(m);
+  }
+
+  // Super cool feature: integration with platform `http_method` enum
+#ifdef ASYNCWEBSERVER_HTTP_METHOD_INTEGRATION
+
+// Conversion function for integration with external libraries.
+// Horrible ternary implementation for C++11 compatibility.
+#define MAP_EXTERNAL_TERNARY(x) (t == http_method::x) ? static_cast<uint32_t>(WebRequestMethod::x)
+  constexpr static inline uint32_t map_http_method(http_method t) {
+    return MAP_EXTERNAL_TERNARY(HTTP_DELETE)
+      : MAP_EXTERNAL_TERNARY(HTTP_GET)
+      : MAP_EXTERNAL_TERNARY(HTTP_HEAD)
+      : MAP_EXTERNAL_TERNARY(HTTP_POST)
+      : MAP_EXTERNAL_TERNARY(HTTP_PUT)
+      : MAP_EXTERNAL_TERNARY(HTTP_CONNECT)
+      : MAP_EXTERNAL_TERNARY(HTTP_OPTIONS)
+      : MAP_EXTERNAL_TERNARY(HTTP_TRACE)
+      : MAP_EXTERNAL_TERNARY(HTTP_COPY)
+      : MAP_EXTERNAL_TERNARY(HTTP_LOCK)
+      : MAP_EXTERNAL_TERNARY(HTTP_MKCOL)
+      : MAP_EXTERNAL_TERNARY(HTTP_MOVE)
+      : MAP_EXTERNAL_TERNARY(HTTP_PROPFIND)
+      : MAP_EXTERNAL_TERNARY(HTTP_PROPPATCH)
+      : MAP_EXTERNAL_TERNARY(HTTP_SEARCH)
+      : MAP_EXTERNAL_TERNARY(HTTP_UNLOCK)
+      : MAP_EXTERNAL_TERNARY(HTTP_BIND)
+      : MAP_EXTERNAL_TERNARY(HTTP_REBIND)
+      : MAP_EXTERNAL_TERNARY(HTTP_UNBIND)
+      : MAP_EXTERNAL_TERNARY(HTTP_ACL)
+      : MAP_EXTERNAL_TERNARY(HTTP_PATCH)
+      : MAP_EXTERNAL_TERNARY(HTTP_PURGE)
+      : MAP_EXTERNAL_TERNARY(HTTP_LINK)
+      : MAP_EXTERNAL_TERNARY(HTTP_UNLINK)
+#if defined(HTTP_ANY)
+      : (t == HTTP_ANY) ? static_cast<uint32_t>(WebRequestMethod::HTTP_INVALID) - 1
+#endif
+                        : static_cast<uint32_t>(WebRequestMethod::HTTP_INVALID);
+  }
+#undef MAP_EXTERNAL_TERNARY
+
+  constexpr WebRequestMethodComposite(http_method m) : mask(map_http_method(m)){};
+#endif
+};  // WebRequestMethodComposite
+
+// Operator| for WebRequestMethod: combine to a WebRequestMethodComposite
+constexpr inline WebRequestMethodComposite operator|(WebRequestMethod l, WebRequestMethod r) {
   return static_cast<WebRequestMethodComposite>(l) | r;
 };
+
+namespace AsyncWebRequestMethod {
+constexpr WebRequestMethodComposite HTTP_ALL = static_cast<WebRequestMethod>(static_cast<uint32_t>(HTTP_INVALID) - 1);
+
+// Support HTTP_ANY if we can
+#ifndef HTTP_ANY
+constexpr WebRequestMethodComposite HTTP_ANY = HTTP_ALL;
+#endif
+}  // namespace AsyncWebRequestMethod
+
+// WebRequestMethod string conversion functions
+namespace asyncsrv {
+WebRequestMethod stringToMethod(const String &);
+const char *methodToString(WebRequestMethod);
+}  // namespace asyncsrv
 
 #if !defined(ASYNCWEBSERVER_NO_GLOBAL_HTTP_METHODS)
 // Import the method enum values to the global namespace
@@ -265,7 +398,7 @@ private:
   uint8_t _parseState;
 
   uint8_t _version;
-  WebRequestMethodComposite _method;
+  WebRequestMethod _method;
   String _url;
   String _host;
   String _contentType;
@@ -355,7 +488,7 @@ public:
   uint8_t version() const {
     return _version;
   }
-  WebRequestMethodComposite method() const {
+  WebRequestMethod method() const {
     return _method;
   }
   const String &url() const {
@@ -374,7 +507,9 @@ public:
     return _isMultipart;
   }
 
-  const char *methodToString() const;
+  inline const char *methodToString() const {
+    return asyncsrv::methodToString(_method);
+  };
   const char *requestedConnTypeToString() const;
 
   RequestedConnectionType requestedConnType() const {
@@ -1556,7 +1691,7 @@ public:
   bool removeHandler(AsyncWebHandler *handler);
 
   AsyncCallbackWebHandler &on(AsyncURIMatcher uri, ArRequestHandlerFunction onRequest) {
-    return on(std::move(uri), AsyncWebRequestMethod::HTTP_ANY, onRequest);
+    return on(std::move(uri), AsyncWebRequestMethod::HTTP_ALL, onRequest);
   }
   AsyncCallbackWebHandler &on(
     AsyncURIMatcher uri, WebRequestMethodComposite method, ArRequestHandlerFunction onRequest, ArUploadHandlerFunction onUpload = nullptr,

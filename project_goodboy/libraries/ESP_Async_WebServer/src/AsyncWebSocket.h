@@ -373,7 +373,7 @@ private:
   AwsHandshakeHandler _handshakeHandler;
   bool _enabled;
 #ifdef ESP32
-  mutable std::mutex _lock;
+  mutable std::recursive_mutex _lock;
 #endif
 
 public:

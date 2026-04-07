@@ -1,9 +1,9 @@
 /*
   Sources:
 
-  freertos.org
+  FreeRTOS API and Examples - freertos.org
 
-  FreeRTOS API and Examples - Espressif Systems docs.espressif.com
+  Espressif Systems docs.espressif.com
 
   ChatGPT - OpenAI.com
 
@@ -26,12 +26,17 @@
 #include "LittleFS.h"
 #include <DNSServer.h>
 #include <ESPmDNS.h>
+#include <driver/adc.h>
+#include <AccelStepper.h>
 
 #define STEPS_PER_REV 200
-#define MIN_SPEED 1
-#define MAX_SPEED 20
-#define STEP_DELAY_BASE 21000
-#define DIVISOR 2
+#define MIN_SPEED 100
+#define MAX_SPEED 1000
+#define R1 100000.0f   // 100k
+#define R2 33000.0f    // 33k
+#define ADC_MAX 4095.0f
+#define ADC_REF 3.3f  
+#define ACC 800
 
 const char *AP_SSID = "GoodBoy";
 const char *AP_PASS = "buddythedog";
@@ -47,9 +52,18 @@ AsyncWebServer server(80);
 
 const int dir = 5;
 const int stepp = 19;
-const int breakBeam = 2;
+const int breakBeam = 18;
+const int enablePin = 4;
+const int batt = 34;
+volatile float g_battVoltage = 0.0f;
+volatile bool stopRequested = false;
+volatile bool isRunning = false;
 String ssid, pass;
-int breakState = 0;
+
+int breakState;
+
+AccelStepper stepper(AccelStepper::DRIVER, stepp, dir);
+
 TaskHandle_t TaskWiFiHandle = NULL;
 QueueHandle_t stepperQueue = NULL;
 
@@ -57,11 +71,11 @@ typedef struct {
   int speed;
 } StepperJob;
 
-void WiFiTask(void *parameter);
 bool connectWiFi();
 void startAP();
 void startWebServer();
 void initLittleFS();
+void setupADC();
 void saveCredentials(fs::FS &fs, const char *path, const char *message);
 String loadCredentials(fs::FS &fs, const char *path);
 
@@ -69,57 +83,60 @@ String loadCredentials(fs::FS &fs, const char *path);
 * StepperTask - Free RTOS Task
 * Handles stepper motor controls
 * Recieves speed and on/off data via a queue/struct
-* Controls stepper via GPIO directly, no stepper specific libraries
+* Recieves input from a break beam sensor to detect treat
 *************/
 void StepperTask(void *parameter) {
   StepperJob job;
   for (;;) {
     if (xQueueReceive(stepperQueue, &job, portMAX_DELAY) == pdTRUE) {
+      stopRequested = false;
+      isRunning = true;
       int spd = constrain(job.speed, MIN_SPEED, MAX_SPEED);
-      bool treat = false;
-      digitalWrite(dir, HIGH);
-      for (int i = 0; i < STEPS_PER_REV; ++i) {
-        digitalWrite(stepp, HIGH);
-        delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
-        digitalWrite(stepp, LOW);
-        delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
+      digitalWrite(enablePin, LOW);
+      stepper.setMaxSpeed(spd);
+      stepper.setCurrentPosition(0);
+      for (int j = 0; j < 4; ++j) {
+        if (stopRequested) break;
         breakState = digitalRead(breakBeam);
-        if (breakState == LOW){
-          treat = true;
-          Serial.println("Stepper run complete.");
-          break;
+        if (breakState == LOW) break;
+        stepper.moveTo(200);
+        while (stepper.distanceToGo() != 0) {
+          stepper.run();
+          if (stopRequested) {
+            stepper.stop();
+            while (stepper.isRunning()) {
+              stepper.run(); 
+            }
+            break;
+          }
+          breakState = digitalRead(breakBeam);
+          if (breakState == LOW){
+            stepper.stop();
+            break;
+          }
+        }
+        stepper.setCurrentPosition(0);
+        stepper.moveTo(-200);
+        while (stepper.distanceToGo() != 0) {
+          stepper.run();
+          breakState = digitalRead(breakBeam);
+          if (stopRequested) {
+            stepper.stop();
+            while (stepper.isRunning()) {
+              stepper.run(); 
+            }
+            break;
+          }
+          breakState = digitalRead(breakBeam);
+          if (breakState == LOW){
+            stepper.stop();
+            break;
+          }
         }
       }
-      int count = 0;
-      while (!treat && count < 5){
-          digitalWrite(dir, HIGH);
-          for (int i = 0; i < STEPS_PER_REV/DIVISOR; ++i){
-            
-            digitalWrite(stepp, HIGH);
-            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
-            digitalWrite(stepp, LOW);
-            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
-            breakState = digitalRead(breakBeam);
-            if (breakState == LOW){
-              treat = true;
-              break;
-              }
-          }
-          digitalWrite(dir, LOW);
-          for (int i = 0; i < STEPS_PER_REV/DIVISOR; ++i){
-            digitalWrite(stepp, HIGH);
-            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
-            digitalWrite(stepp, LOW);
-            delayMicroseconds(STEP_DELAY_BASE-(spd*1000));
-            breakState = digitalRead(breakBeam);
-            if (breakState == LOW){
-              treat = true;
-              break;
-              }
-          }
-          count++;
-      }
+      isRunning = false;
       Serial.println("Stepper run complete.");
+      digitalWrite(enablePin, HIGH);
     }
   }
 }
@@ -136,44 +153,18 @@ void RebootTask(void *param) {
   vTaskDelete(NULL);
 }
 
-/*******
-* Sets up pins as outputs
-* Initializes file system
-* Creates tasks
-*********/
-void setup() {
-  Serial.begin(115200);
-  delay(1000);
-  pinMode(stepp, OUTPUT);
-  pinMode(dir, OUTPUT);
-  pinMode(breakBeam, INPUT);
-  Serial.print("Reset reason: ");
-  Serial.println(esp_reset_reason());
-  initLittleFS();
-
-  stepperQueue = xQueueCreate(1, sizeof(StepperJob));
-
-  if (stepperQueue == NULL) {
-    Serial.println("Failed to create stepperQueue!");
+/******
+* BatteryTask - Free RTOS Task
+* Reads battery voltage using a voltage divider
+*******/
+void BatteryTask(void *parameter) {
+  for (;;) {
+    int adc_raw = analogRead(34);
+    float v_adc = (adc_raw / ADC_MAX) * ADC_REF;
+    float v_batt = v_adc * ((R1 + R2) / R2);  // Compensate voltage divider
+    g_battVoltage = v_batt;
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
-
-  xTaskCreatePinnedToCore(
-    StepperTask,
-    "StepperTask",
-    4096,
-    NULL,
-    2,
-    NULL,
-    1);
-
-  xTaskCreatePinnedToCore(
-    WiFiTask,
-    "WiFiTask",
-    4096,
-    NULL,
-    1,
-    &TaskWiFiHandle,
-    0);
 }
 
 /****************
@@ -212,6 +203,53 @@ void WiFiTask(void *parameter) {
   vTaskSuspend(NULL);  
 }
 
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  pinMode(enablePin, OUTPUT);
+  digitalWrite(enablePin, HIGH);
+  pinMode(stepp, OUTPUT);
+  pinMode(dir, OUTPUT);
+  pinMode(breakBeam, INPUT_PULLUP);
+  //Serial.print("Reset reason: ");
+  //Serial.println(esp_reset_reason());
+  initLittleFS();
+  stepper.setAcceleration(ACC);
+  stepperQueue = xQueueCreate(1, sizeof(StepperJob));
+
+  if (stepperQueue == NULL) {
+    Serial.println("Failed to create stepperQueue!");
+  }
+
+  xTaskCreatePinnedToCore(
+    StepperTask,
+    "StepperTask",
+    4096,
+    NULL,
+    2,
+    NULL,
+    1);
+
+  xTaskCreatePinnedToCore(
+    WiFiTask,
+    "WiFiTask",
+    4096,
+    NULL,
+    1,
+    &TaskWiFiHandle,
+    0);
+
+  xTaskCreatePinnedToCore(
+    BatteryTask,
+    "BatteryTask",
+    2048,
+    NULL,
+    1,
+    NULL,
+    1
+  );
+}
+
 /***********
 * connectWifi - bool func
 * Connects to saved credentials.
@@ -244,7 +282,7 @@ bool connectWiFi() {
 
 /**********
 * startAP - void funct
-* Starts access point at: 192.168.4.1
+* Starts access point at: http://192.168.4.1
 ***********/
 void startAP() {
   Serial.println("Setting WiFi mode to AP");
@@ -272,36 +310,50 @@ void startAP() {
 ********/
 void startWebServer() {
   server.onNotFound([](AsyncWebServerRequest *request){
-  request->redirect("http://192.168.4.1/");
-});
+    request->send(200, "text/plain", "Not found");
+  });
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(LittleFS, "/index.html", "text/html");
   });
 
   server.serveStatic("/", LittleFS, "/");
+  
   server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->redirect("/");
-});
+    request->redirect("/");
+  });
 
-server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->redirect("/");
-});
+  server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->redirect("/");
+  });
 
-server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->redirect("/");
-});
-  /****
-  * Runs stepper:
-  * sets speed (1-19)
-  *****/
+  server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->redirect("/");
+  });
+
+  server.on("/stop", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (isRunning){
+     stopRequested = true;
+    }
+    request->send(200, "text/plain", "Stop Sent");
+  });
+
+  server.on("/voltage", HTTP_GET, [](AsyncWebServerRequest *request){
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%.2f", g_battVoltage);
+    request->send(200, "application/json", String("{\"voltage\":") + buf + "}");
+  });
+
   server.on("/run", HTTP_GET, [](AsyncWebServerRequest *request) {
+    stopRequested = false;
     int spd = MIN_SPEED;
     if (request->hasParam("speed")) {
       spd = constrain(request->getParam("speed")->value().toInt(), MIN_SPEED, MAX_SPEED);
     }
     StepperJob job;
     job.speed = spd;
-    xQueueSend(stepperQueue, &job, 0);
+    xQueueOverwrite(stepperQueue, &job);
+    Serial.println("Job sent to queue");
     request->send(200, "text/plain", "Stepper command updated");
   });
 
@@ -331,9 +383,11 @@ server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request){
       NULL,
       1);
   });
+  
   server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){
-  request->redirect("/");
-});
+    request->redirect("/");
+  });
+
   server.begin();
 }
 
@@ -380,9 +434,11 @@ String loadCredentials(fs::FS &fs, const char *path) {
   return content;
 }
 
-/*******
-* Just moves the DNS along
-********/
+void setupADC() {
+    analogReadResolution(12);           
+    analogSetAttenuation(ADC_11db);    
+}
+
 void loop() {
  if (WiFi.getMode() == WIFI_AP) {
     dnsServer.processNextRequest();
