@@ -95,7 +95,7 @@ void StepperTask(void *parameter) {
       digitalWrite(enablePin, LOW);
       stepper.setMaxSpeed(spd);
       stepper.setCurrentPosition(0);
-      for (int j = 0; j < 4; ++j) {
+      for (int j = 0; j < 3; ++j) {
         if (stopRequested) break;
         breakState = digitalRead(breakBeam);
         if (breakState == LOW) break;
