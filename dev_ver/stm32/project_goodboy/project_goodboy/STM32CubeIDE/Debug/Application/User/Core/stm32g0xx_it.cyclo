@@ -1,0 +1,9 @@
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:72:6:NMI_Handler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:87:6:HardFault_Handler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:102:6:SVC_Handler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:115:6:PendSV_Handler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:128:6:SysTick_Handler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:149:6:EXTI0_1_IRQHandler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:163:6:TIM3_IRQHandler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:177:6:TIM6_DAC_LPTIM1_IRQHandler	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_it.c:191:6:I2C1_IRQHandler	2

@@ -1,0 +1,3 @@
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_timebase_tim.c:41:19:HAL_InitTick	64	static
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_timebase_tim.c:120:6:HAL_SuspendTick	8	static
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_timebase_tim.c:132:6:HAL_ResumeTick	8	static

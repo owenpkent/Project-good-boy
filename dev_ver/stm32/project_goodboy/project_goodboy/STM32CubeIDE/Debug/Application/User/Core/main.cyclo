@@ -1,0 +1,14 @@
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:73:6:SetStepperSpeed	4
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:97:6:StartMove	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:120:6:DispenseCycle	8
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:161:5:main	3
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:219:6:SystemClock_Config	3
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:264:13:MX_I2C1_Init	4
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:309:13:MX_TIM3_Init	4
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:351:13:MX_USART1_UART_Init	5
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:396:13:MX_GPIO_Init	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:483:6:HAL_GPIO_EXTI_Falling_Callback	2
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:491:6:HAL_I2C_SlaveRxCpltCallback	5
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:522:6:HAL_I2C_ListenCpltCallback	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:536:6:HAL_TIM_PeriodElapsedCallback	8
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/main.c:591:6:Error_Handler	1

@@ -1,0 +1,7 @@
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:62:6:HAL_MspInit	1
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:85:6:HAL_I2C_MspInit	3
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:135:6:HAL_I2C_MspDeInit	2
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:168:6:HAL_TIM_Base_MspInit	2
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:194:6:HAL_TIM_Base_MspDeInit	2
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:219:6:HAL_UART_MspInit	3
+C:/Users/Marshall Saltz/Documents/Business - SaltzTech/project_goodboy/project_goodboy/Core/Src/stm32g0xx_hal_msp.c:267:6:HAL_UART_MspDeInit	2

@@ -19,16 +19,15 @@ Marshall Saltz - https://saltztech.com/
 - **Web Interface** — Phone-friendly UI served directly from the device
 - **Battery Powered** — Uses a 12 V Lipo to power the system
 - **Accessible Design** — Large buttons, simple controls, wheelchair-mountable
-- **Modular** — Components of your choosing can be easily added to or removed from the system
 ---
 
 ## Bill of Materials
 
 | Component | Amount | Link |
 |-----------|-------------|------|
-| Battery | 1 | [Amazon](https://www.amazon.com/dp/B0D9D8ZSV9?ref=ppx_yo2ov_dt_b_fed_asin_title) |
+| Battery | 1 | [Amazon](https://www.amazon.com/dp/B0D9D8ZSV9) |
 | Nema 17 Stepper Motor | 1 | [Amazon](https://www.amazon.com/dp/B07PNV7RBW) |
-| A4988 Stepper Motor Driver | 1 | [Amazon](https://www.amazon.com/your-orders/order-details?orderID=112-0511300-4533845) |
+| TMC2209 Stepper Motor Driver | 1 | [Amazon](https://www.amazon.com/dp/B07ZPYKL46) |
 | 12V to 5V DC Converter | 1 | [Amazon](https://www.amazon.com/dp/B08VHZJ3C8) |
 | 8mm M3 Bolts | 4 | [Amazon](https://www.amazon.com/dp/B0C7ZRTH3Q) |
 | Jumper Wires | —| — |
@@ -83,13 +82,13 @@ Required libraries:
 
 ### Upload Firmware
 
-1. Download project_goodboy folder
+1. Download module_ver/project_goodboy folder
 
 2. Connect the ESP32 via USB-C and open project_goodboy.ino in Arduino IDE
    
-3. Upload the sketch
+3. Upload the data folder to the ESP32 using LittleFS (See [Random Nerd Tutorials](https://randomnerdtutorials.com/esp32-littlefs-arduino-ide/) for further instruction)
 
-4. Upload the data folder to the ESP32 using LittleFS (See [Random Nerd Tutorials](https://randomnerdtutorials.com/esp32-littlefs-arduino-ide/) for further instruction)
+4. Upload sketch
 
 ## Usage
 
@@ -98,6 +97,7 @@ Required libraries:
 1. Power on the device
 2. Connect to Wi-Fi network: **GoodBoy** (password: `buddythedog`)
 3. Open browser: `http://192.168.4.1` if pop-up does not open automatically
+![QR](media/frame.png)
 4. Enter your home Wi-Fi credentials to connect the device to your network
 
 ### Normal Operation
@@ -106,7 +106,7 @@ Required libraries:
 2. Open browser: `http://goodboy.local` (or check serial output for IP)
 3. Use the web interface:
    - **Dispense** — Triggers the motor to dispense a treat
-   - **Speed** — Adjusts motor speed (1–20)
+   - **Speed** — Adjusts motor speed
 
 Can also be used in AP mode by following steps 1-3 of First Boot
 
@@ -115,9 +115,11 @@ Can also be used in AP mode by following steps 1-3 of First Boot
 ## TODO
 
 - [ ] Include assembly instructions/video
-- [ ] Remove vacuum code from ino file
 - [ ] Maintainance instructions
 - [ ] Video of operation
+- [ ] Include sensor instructions, aperture models, etc.
+- [ ] Update schematic to include sensors and voltage regulator
+- [ ] Include link to survey
 ---
 
 ## Contributing
