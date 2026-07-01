@@ -5,6 +5,12 @@ It is currently compatible with being mounted on 40x40 aluminum extrusions.
 
 **Want one built for you? Or modifications/additional support?** Reach out—we'd be happy to help!
 
+If you are interested in us developing this as a product, please take the [survey] (https://tinyurl.com/m8z8fjtb)
+
+Survey: https://tinyurl.com/m8z8fjtb
+
+---
+
 ## Contact
 
 Owen Kent - https://okstud.io/
@@ -38,6 +44,8 @@ Marshall Saltz - https://saltztech.com/
 | Wagu Wire Connectors | — | — |
 | ArtResin or another safe resin | — | — |
 | 100 uF Capacitor | 1 | - |
+
+---
 
 ### Tools Required
 
@@ -112,14 +120,17 @@ Can also be used in AP mode by following steps 1-3 of First Boot
 
 ---
 
+### Maintainance
+This dispenser must be cleaned regularly. To clean, wipe down with a damp paper towel or food-safe cleaner. The parts can be submerged for a deeper clean as long as all electronics are disconnected.
+
+---
+
 ## TODO
 
 - [ ] Include assembly instructions/video
-- [ ] Maintainance instructions
 - [ ] Video of operation
 - [ ] Include sensor instructions, aperture models, etc.
 - [ ] Update schematic to include sensors and voltage regulator
-- [ ] Include link to survey
 ---
 
 ## Contributing
@@ -137,5 +148,3 @@ MIT License — see `LICENSE`.
 ## Credits
 
 Built with love for a very good boy.
-
-For additional assistance with connecting the stepper motor driver, visit: [Last Minute Engineers](https://lastminuteengineers.com/a4988-stepper-motor-driver-arduino-tutorial/)
