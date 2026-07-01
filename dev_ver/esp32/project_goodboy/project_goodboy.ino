@@ -24,7 +24,6 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include "LittleFS.h"
-#include <DNSServer.h>
 #include <ESPmDNS.h>
 #include <driver/adc.h>
 #include <Wire.h>
@@ -53,10 +52,9 @@ const char *PARAM_INPUT_2 = "pass";
 const char *ssidPath = "/ssid.txt";
 const char *passPath = "/pass.txt";
 
-DNSServer dnsServer;
 AsyncWebServer server(80);
 
-const int batt = 4;
+const int batt = 5;
 volatile float g_battVoltage = 0.0f;
 volatile bool stopRequested;
 String ssid, pass;
@@ -212,7 +210,6 @@ void startAP() {
   Serial.println(AP_SSID);
   WiFi.softAP(AP_SSID, AP_PASS);
   Serial.println("Starting DNS server");
-  dnsServer.start(53, "*", WiFi.softAPIP()); 
   Serial.print("AP IP: ");
   Serial.println(WiFi.softAPIP());
   Serial.println("AP setup complete");
@@ -226,7 +223,7 @@ void startAP() {
 ********/
 void startWebServer() {
   server.onNotFound([](AsyncWebServerRequest *request){
-    request->send(200, "text/plain", "Not found");
+    request->send(404, "text/plain", "404 Not found");
   });
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -234,18 +231,6 @@ void startWebServer() {
   });
 
   server.serveStatic("/", LittleFS, "/");
-
-  server.on("/hotspot-detect.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->redirect("/");
-  });
-
-  server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->redirect("/");
-  });
-
-  server.on("/ncsi.txt", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->redirect("/");
-  });
 
   server.on("/voltage", HTTP_GET, [](AsyncWebServerRequest *request){
     char buf[16];
@@ -297,10 +282,6 @@ void startWebServer() {
       1,
       NULL,
       1);
-  });
-  
-  server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->redirect("/");
   });
   
   server.begin();
@@ -401,9 +382,5 @@ void selectChannel()
 }
 
 void loop() {
- if (WiFi.getMode() == WIFI_AP) {
-    dnsServer.processNextRequest();
-  }
-  delay(10);
 }
 
