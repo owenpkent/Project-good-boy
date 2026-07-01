@@ -130,7 +130,6 @@ This dispenser must be cleaned regularly. To clean, wipe down with a damp paper 
 - [ ] Include assembly instructions/video
 - [ ] Video of operation
 - [ ] Include sensor instructions, aperture models, etc.
-- [ ] Update schematic to include sensors and voltage regulator
 ---
 
 ## Contributing
