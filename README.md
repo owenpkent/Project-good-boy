@@ -62,13 +62,6 @@ Marshall Saltz - https://saltztech.com/
 
 ![Wiring](media/goodboy_wiring.png)
 
-The pins should be connected as follows:
-
-| 12V Li-on battery | 12V->5V Voltage Regulator | ESP32 Dev Kit | Motor Driver | Motor | Capacitor |
-|-------------------|---------------------------|---------------|--------------|-------|-----------|
-| +12V | +12V | - | VMOT | - | + |
-| GND | GND | GND | GND | - | GND |
-| - | +5V | Vin | VDD | - | - |
 ---
 
 ## Building & Uploading
@@ -121,7 +114,7 @@ Can also be used in AP mode by following steps 1-3 of First Boot
 ---
 
 ### Maintainance
-This dispenser must be cleaned regularly. To clean, wipe down with a damp paper towel or food-safe cleaner. The parts can be submerged for a deeper clean as long as all electronics are disconnected.
+This dispenser must be cleaned regularly. To clean, wipe down with a damp paper towel or food-safe cleaner. The parts can be submerged for a deeper clean as long as all electronics are disconnected including the motor and sensors.
 
 ---
 
