@@ -61,8 +61,6 @@ Marshall Saltz - https://saltztech.com/
 
 ![Schematic](media/goodboy_schematic.png)
 
-![Wiring](media/goodboy_wiring.png)
-
 ---
 
 ## Building & Uploading
