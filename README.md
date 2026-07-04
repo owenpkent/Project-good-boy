@@ -53,6 +53,7 @@ Marshall Saltz - https://saltztech.com/
 - Electronics screwdriver
 - USB-C cable (for uploading firmware and charging)
 - 3D printer
+- Flat edge screwdriver
 
 ---
 
