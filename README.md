@@ -5,7 +5,7 @@ It is currently compatible with being mounted on 40x40 aluminum extrusions.
 
 **Want one built for you? Or modifications/additional support?** Reach out—we'd be happy to help!
 
-If you are interested in us developing this as a product, please take the [survey] (https://tinyurl.com/m8z8fjtb)
+If you are interested in us developing this as a product, please take the survey.
 
 Survey: https://tinyurl.com/m8z8fjtb
 

@@ -913,9 +913,9 @@ void DispenseCycle(void)
  8000718:	4b26      	ldr	r3, [pc, #152]	@ (80007b4 <DispenseCycle+0xa8>)
  800071a:	2200      	movs	r2, #0
  800071c:	701a      	strb	r2, [r3, #0]
-    uint32_t MOVE_STEPS = 400;
+    uint32_t MOVE_STEPS = 1600;
  800071e:	23c8      	movs	r3, #200	@ 0xc8
- 8000720:	005b      	lsls	r3, r3, #1
+ 8000720:	00db      	lsls	r3, r3, #3
  8000722:	603b      	str	r3, [r7, #0]
 
     HAL_GPIO_WritePin(ENN_PORT,
@@ -928,7 +928,7 @@ void DispenseCycle(void)
                       ENN_PIN,
                       GPIO_PIN_RESET);
 
-    for(int i=0;i<5;i++)
+    for(int i=0;i<1;i++)
  8000732:	2300      	movs	r3, #0
  8000734:	607b      	str	r3, [r7, #4]
  8000736:	e02c      	b.n	8000792 <DispenseCycle+0x86>
@@ -989,12 +989,12 @@ void DispenseCycle(void)
  8000786:	b2db      	uxtb	r3, r3
  8000788:	2b00      	cmp	r3, #0
  800078a:	d105      	bne.n	8000798 <DispenseCycle+0x8c>
-    for(int i=0;i<5;i++)
+    for(int i=0;i<1;i++)
  800078c:	687b      	ldr	r3, [r7, #4]
  800078e:	3301      	adds	r3, #1
  8000790:	607b      	str	r3, [r7, #4]
  8000792:	687b      	ldr	r3, [r7, #4]
- 8000794:	2b04      	cmp	r3, #4
+ 8000794:	2b00      	cmp	r3, #0
  8000796:	ddcf      	ble.n	8000738 <DispenseCycle+0x2c>
             break;
     }

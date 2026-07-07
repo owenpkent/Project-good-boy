@@ -121,13 +121,13 @@ void DispenseCycle(void)
 {
     stopRequested = 0;
     treatDetected = 0;
-    uint32_t MOVE_STEPS = 400;
+    uint32_t MOVE_STEPS = 1600;
 
     HAL_GPIO_WritePin(ENN_PORT,
                       ENN_PIN,
                       GPIO_PIN_RESET);
 
-    for(int i=0;i<5;i++)
+    for(int i=0;i<1;i++)
     {
         StartMove(MOVE_STEPS, GPIO_PIN_SET);
 
